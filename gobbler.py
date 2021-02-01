@@ -47,33 +47,6 @@ def db_init(file: str) -> sqlite3.Connection:
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-db', '--db-file',
-        action='store',
-        type=str,
-        required=False,
-        default=':memory:',
-        metavar='FILE',
-        help='name of database file, defaults to ":memory:"'
-    )
-    parser.add_argument(
-        '--max-entries',
-        action='store',
-        type=int,
-        required=False,
-        default=10000,
-        metavar='MAX',
-        help='max amount of entries per server, defaults to 10000'
-    )
-    parser.add_argument(
-        '--check-delay',
-        action='store',
-        type=int,
-        required=False,
-        default=10,
-        metavar='SEC',
-        help='delay between checks in seconds, defaults to 10'
-    )
-    parser.add_argument(
         '--servers',
         action='extend',
         type=str,
@@ -88,8 +61,35 @@ def parse_args():
         action='store',
         type=str,
         required=False,
-        metavar='URL',
+        metavar='ADDRESS',
         help='servers to be monitored, supplied as url'
+    )
+    parser.add_argument(
+        '-db', '--db-file',
+        action='store',
+        type=str,
+        required=False,
+        default='data.db',
+        metavar='FILE',
+        help='name of database file, defaults to data.db'
+    )
+    parser.add_argument(
+        '--check-delay',
+        action='store',
+        type=int,
+        required=False,
+        default=10,
+        metavar='SEC',
+        help='delay between checks in seconds, defaults to 10'
+    )
+    parser.add_argument(
+        '--max-entries',
+        action='store',
+        type=int,
+        required=False,
+        default=10000,
+        metavar='MAX',
+        help='max amount of entries per server, defaults to 10000'
     )
     return parser.parse_args()
 

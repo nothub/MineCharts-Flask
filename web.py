@@ -41,9 +41,9 @@ def parse_args():
         action='store',
         type=str,
         required=False,
-        default=':memory:',
+        default='data.db',
         metavar='FILE',
-        help='name of database file, defaults to ":memory:"'
+        help='name of database file, defaults to data.db'
     )
     parser.add_argument(
         '--max-response-entries',
