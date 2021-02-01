@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import sqlite3
+import logging as log
 
 from flask import Flask, jsonify
 
@@ -34,7 +35,7 @@ def page_not_found(error):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(prog='focal-standalone-init')
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         '-db', '--db-file',
         action='store',
@@ -58,4 +59,6 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
+    log.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log.INFO)
+    log.info('starting web with args: ' + str(args))
     app.run(debug=True)
