@@ -1,0 +1,25 @@
+# ignore all files
+*
+# but include directories
+!*/
+
+# git
+!/**/.gitkeep
+!/.gitignore
+
+# github
+!/.github/**
+
+# idea
+!/.idea/runConfigurations/**
+
+# python
+!/*.py
+!/requirements.txt
+
+# docker
+!/**/Dockerfile
+
+# misc
+!/**/*.md
+!/**/.editorconfig
