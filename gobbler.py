@@ -9,7 +9,7 @@ from typing import Optional, Tuple
 from mcstatus import MinecraftServer
 from requests import get
 
-from lib import non_empty_string, positive_int_type, init_logger, min_1000_int
+from lib import non_empty_string_type, positive_int_type, init_logger, min_1000_int
 
 
 def fetch_data(address: str) -> Tuple[Optional[int], Optional[int]]:
@@ -55,7 +55,7 @@ def parse_args():
     parser.add_argument(
         '--servers',
         action='extend',
-        type=non_empty_string,
+        type=non_empty_string_type,
         nargs='+',
         required=False,
         default=list(),
@@ -65,7 +65,7 @@ def parse_args():
     parser.add_argument(
         '--servers-url',
         action='store',
-        type=non_empty_string,
+        type=non_empty_string_type,
         required=False,
         metavar='URL',
         help='servers to be monitored, supplied as url'
@@ -73,7 +73,7 @@ def parse_args():
     parser.add_argument(
         '-db', '--db-file',
         action='store',
-        type=non_empty_string,
+        type=non_empty_string_type,
         required=False,
         default='data.db',
         metavar='FILE',
@@ -86,7 +86,7 @@ def parse_args():
         required=False,
         default=10,
         metavar='SEC',
-        help='delay between checks in seconds, defaults to 10'
+        help='min delay between checks in seconds, defaults to 10'
     )
     parser.add_argument(
         '--max-entries',

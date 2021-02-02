@@ -5,7 +5,7 @@ import sqlite3
 
 from flask import Flask, jsonify
 
-from lib import positive_int_type, non_empty_string, init_logger
+from lib import positive_int_type, non_empty_string_type, init_logger
 
 app = Flask(__name__)
 
@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument(
         '-db', '--db-file',
         action='store',
-        type=non_empty_string,
+        type=non_empty_string_type,
         required=False,
         default='data.db',
         metavar='FILE',
