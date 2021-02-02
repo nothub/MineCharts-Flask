@@ -9,6 +9,8 @@ from typing import Optional, Tuple
 from mcstatus import MinecraftServer
 from requests import get
 
+from lib import non_empty_string, positive_int_type, init_logger, min_1000_int
+
 
 def fetch_data(address: str) -> Tuple[Optional[int], Optional[int]]:
     log.debug('fetching data for: ' + address)
@@ -20,10 +22,14 @@ def fetch_data(address: str) -> Tuple[Optional[int], Optional[int]]:
     return status.players.online, round(status.latency)
 
 
-def work(address: str, cur: sqlite3.Cursor, max_entries: int):
+def work(address: str, cur: sqlite3.Cursor):
     player, ping = fetch_data(address)
     cur.execute('INSERT OR IGNORE INTO servers VALUES (?)', [address])
     cur.execute('INSERT INTO data VALUES (?,?,?,?)', (address, int(time.time()), player, ping))
+    cur.execute('SELECT COUNT(*) FROM data WHERE address = (?)', [address])
+    if int(cur.fetchone()[0]) > args.max_entries:
+        log.debug('removing oldest 100 entries for ' + address)
+        cur.execute('''DELETE FROM data WHERE address = (?) ORDER BY time ASC LIMIT 100''', [address])
 
 
 def db_init(file: str) -> sqlite3.Connection:
@@ -49,7 +55,7 @@ def parse_args():
     parser.add_argument(
         '--servers',
         action='extend',
-        type=str,
+        type=non_empty_string,
         nargs='+',
         required=False,
         default=list(),
@@ -59,15 +65,15 @@ def parse_args():
     parser.add_argument(
         '--servers-url',
         action='store',
-        type=str,
+        type=non_empty_string,
         required=False,
-        metavar='ADDRESS',
+        metavar='URL',
         help='servers to be monitored, supplied as url'
     )
     parser.add_argument(
         '-db', '--db-file',
         action='store',
-        type=str,
+        type=non_empty_string,
         required=False,
         default='data.db',
         metavar='FILE',
@@ -76,7 +82,7 @@ def parse_args():
     parser.add_argument(
         '--check-delay',
         action='store',
-        type=int,
+        type=positive_int_type,
         required=False,
         default=10,
         metavar='SEC',
@@ -85,7 +91,7 @@ def parse_args():
     parser.add_argument(
         '--max-entries',
         action='store',
-        type=int,
+        type=min_1000_int,
         required=False,
         default=10000,
         metavar='MAX',
@@ -94,23 +100,29 @@ def parse_args():
     return parser.parse_args()
 
 
-if __name__ == '__main__':
-    args = parse_args()
-    log.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log.DEBUG)
-    log.debug('starting gobbler with args: ' + str(args))
-    servers = args.servers
+def parse_servers():
+    out = args.servers
     if args.servers_url is not None:
         log.debug('downloading servers file from: ' + args.servers_url)
-        servers = servers + get(args.servers_url).text.splitlines()
-    servers.sort()
+        out = out + get(args.servers_url).text.splitlines()
+    out.sort()
+    return out
+
+
+if __name__ == '__main__':
+    args = parse_args()
+    init_logger(log, log.DEBUG)
+    log.debug('starting gobbler with args: ' + str(args))
+    servers = parse_servers()
     log.info('monitored servers: ' + str(servers))
     timer = sched.scheduler(time.time, time.sleep)
     db_con = db_init(args.db_file)
     while True:
         db_cur = db_con.cursor()
+        # todo make fetches async and commit after thread join
         for srv in servers:
-            timer.enter(delay=0, priority=0, action=work, argument=[srv, db_cur, args.max_entries])
-        timer.run(blocking=True)
+            timer.enter(delay=0, priority=0, action=work, argument=[srv, db_cur])
+        timer.run(blocking=False)
         db_con.commit()
         db_cur.close()
         time.sleep(args.check_delay)

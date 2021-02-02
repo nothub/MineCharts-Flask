@@ -1,7 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="run" type="Multirun" factoryName="Multirun" separateTabs="false" reuseTabsWithFailures="false" startOneByOne="true" markFailedProcess="true" hideSuccessProcess="false" delayTime="0.3">
-    <runConfiguration name="gobbler" type="Python" />
-    <runConfiguration name="web" type="Python" />
-    <method v="2" />
-  </configuration>
-</component>
