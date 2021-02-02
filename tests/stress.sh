@@ -2,7 +2,7 @@
 
 set -e
 
-THREADS=100
+THREADS=400
 LOOPS=8
 
 START=$(date +%s.%N)
