@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
+import concurrent.futures
 import logging as log
-import sched
 import sqlite3
 import time
 from typing import Optional, Tuple
@@ -10,44 +10,6 @@ from mcstatus import MinecraftServer
 from requests import get
 
 from lib import non_empty_string_type, positive_int_type, init_logger, min_1000_int
-
-
-def fetch_data(address: str) -> Tuple[Optional[int], Optional[int]]:
-    log.debug('fetching data for: ' + address)
-    try:
-        status = MinecraftServer.lookup(address).status()
-    except (IOError, ValueError):
-        log.warning('error while fetching data for: ' + address)
-        return None, None
-    return status.players.online, round(status.latency)
-
-
-def work(address: str, cur: sqlite3.Cursor):
-    player, ping = fetch_data(address)
-    cur.execute('INSERT OR IGNORE INTO servers VALUES (?)', [address])
-    cur.execute('INSERT INTO data VALUES (?,?,?,?)', (address, int(time.time()), player, ping))
-    cur.execute('SELECT COUNT(*) FROM data WHERE address = (?)', [address])
-    if int(cur.fetchone()[0]) > args.max_entries:
-        log.debug('removing oldest 100 entries for ' + address)
-        cur.execute('''DELETE FROM data WHERE address = (?) ORDER BY time ASC LIMIT 100''', [address])
-
-
-def db_init(file: str) -> sqlite3.Connection:
-    con = sqlite3.connect(file)
-    cur = con.cursor()
-    cur.execute(
-        ''' CREATE TABLE IF NOT EXISTS servers
-        (address TEXT NOT NULL UNIQUE PRIMARY KEY)'''
-    )
-    cur.execute(
-        ''' CREATE TABLE IF NOT EXISTS data
-        (address TEXT NOT NULL REFERENCES servers(address),
-        time INTEGER NOT NULL,
-        players INTEGER,
-        ping INTEGER)'''
-    )
-    con.commit()
-    return con
 
 
 def parse_args():
@@ -100,29 +62,65 @@ def parse_args():
     return parser.parse_args()
 
 
+def db_init(file: str) -> sqlite3.Connection:
+    con = sqlite3.connect(file)
+    cur = con.cursor()
+    cur.execute(
+        ''' CREATE TABLE IF NOT EXISTS servers
+        (address TEXT NOT NULL UNIQUE PRIMARY KEY)'''
+    )
+    cur.execute(
+        ''' CREATE TABLE IF NOT EXISTS data
+        (address TEXT NOT NULL REFERENCES servers(address),
+        time INTEGER NOT NULL,
+        players INTEGER,
+        ping INTEGER)'''
+    )
+    con.commit()
+    return con
+
+
 def parse_servers():
     out = args.servers
     if args.servers_url is not None:
-        log.debug('downloading servers file from: ' + args.servers_url)
+        log.info('downloading servers file from: ' + args.servers_url)
         out = out + get(args.servers_url).text.splitlines()
     out.sort()
     return out
 
 
+def fetch_data(address: str) -> Tuple[str, Optional[int], Optional[int]]:
+    log.debug('fetching data for: ' + address)
+    try:
+        status = MinecraftServer.lookup(address).status()
+    except (IOError, ValueError):
+        log.debug('error while fetching data for: ' + address)
+        return address, None, None
+    return address, status.players.online, round(status.latency)
+
+
+def save_data(cursor, status):
+    address, players, ping = status
+    cursor.execute('INSERT OR IGNORE INTO servers VALUES (?)', [address])
+    cursor.execute('INSERT INTO data VALUES (?,?,?,?)', (address, int(time.time()), players, ping))
+    cursor.execute('SELECT COUNT(*) FROM data WHERE address = (?)', [address])
+    if int(cursor.fetchone()[0]) > args.max_entries:
+        log.debug('removing oldest 100 entries for ' + address)
+        cursor.execute('''DELETE FROM data WHERE address = (?) ORDER BY time ASC LIMIT 100''', [address])
+
+
 if __name__ == '__main__':
     args = parse_args()
-    init_logger(log, log.DEBUG)
+    init_logger(log)
     log.debug('starting gobbler with args: ' + str(args))
     servers = parse_servers()
     log.info('monitored servers: ' + str(servers))
-    timer = sched.scheduler(time.time, time.sleep)
     db_con = db_init(args.db_file)
     while True:
-        db_cur = db_con.cursor()
-        # todo make fetches async and commit after thread join
-        for srv in servers:
-            timer.enter(delay=0, priority=0, action=work, argument=[srv, db_cur])
-        timer.run(blocking=False)
+        cur = db_con.cursor()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            for result in executor.map(fetch_data, servers):
+                save_data(cur, result)
         db_con.commit()
-        db_cur.close()
+        cur.close()
         time.sleep(args.check_delay)
