@@ -19,6 +19,9 @@ api_limiter = Limiter(
     default_limits=['4/second,60/minute']
 )
 
+# handler args:
+     # a = request.args.get('a', default = 1, type = int)
+     # b = request.args.get('b', default = 'b', type = str)
 
 @app.route('/')
 def index():
@@ -57,8 +60,6 @@ def api_servers():
 @app.route('/servers/<address>')
 @api_limiter.limit('1/second,20/minute')
 def api_servers_data(address):
-    # a = request.args.get('a', default = 1, type = int)
-    # b = request.args.get('b', default = 'b', type = str)
     cur = sqlite3.connect(args.db_file).cursor()
     cur.execute('SELECT time, players, ping FROM data WHERE address = (?) ORDER BY time DESC', [address])
     return jsonify(cur.fetchall())
