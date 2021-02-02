@@ -18,9 +18,11 @@
 !/requirements.txt
 
 # docker
-!/**/Dockerfile
+!/Dockerfile
+!/.dockerignore
 
 # misc
 !/**/*.md
 !/**/.editorconfig
+!/assets/**
 !/tests/**

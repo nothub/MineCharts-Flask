@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="gobbler" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+  <configuration default="false" name="run" type="PythonConfigurationType" factoryName="Python">
     <module name="pythonProject" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -11,7 +11,7 @@
     <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/gobbler.py" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
     <option name="PARAMETERS" value="--servers notaserver not-a-server --servers-url https://github.com/neckbeard-cc/servers/releases/latest/download/servers.txt --check-delay 1" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
