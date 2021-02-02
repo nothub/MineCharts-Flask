@@ -186,9 +186,8 @@ def parse_args() -> argparse.Namespace:
 if __name__ == '__main__':
     args = parse_args()
     log.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log.DEBUG)
-    log.info('hello world!')
+    log.info('starting with args: ' + str(args))
     gobbler_thread = Thread(target=gobbler.init, args=[args])
     gobbler_thread.setDaemon(True)
     gobbler_thread.start()
-    log.info('starting web with args: ' + str(args))
     app.run(debug=True, host='0.0.0.0')

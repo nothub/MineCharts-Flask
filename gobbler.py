@@ -32,7 +32,7 @@ def db_init(file: str) -> sqlite3.Connection:
 def parse_servers() -> List[str]:
     out = ARGS.servers
     if ARGS.servers_url is not None:
-        log.info('downloading servers file from: ' + ARGS.servers_url)
+        log.debug('downloading servers file from: ' + ARGS.servers_url)
         out = out + get(ARGS.servers_url).text.splitlines()
     out.sort()
     return out
@@ -49,7 +49,7 @@ def fetch_data(address: str) -> Tuple[str, Optional[int], Optional[int]]:
     return address, status.players.online, round(status.latency)
 
 
-def save_data(cursor, status):
+def write_data(cursor, status):
     address, players, ping = status
     cursor.execute('INSERT OR IGNORE INTO servers VALUES (?)', [address])
     cursor.execute('INSERT INTO data VALUES (?,?,?,?)', (address, int(time.time()), players, ping))
@@ -62,7 +62,6 @@ def save_data(cursor, status):
 def init(args: Namespace):
     global ARGS
     ARGS = args
-    log.debug('starting gobbler with args: ' + str(ARGS))
     servers = parse_servers()
     log.info('monitoring ' + str(len(servers)) + ' servers: ' + str(servers))
     db_con = db_init(ARGS.db_file)
@@ -70,7 +69,9 @@ def init(args: Namespace):
         db_cur = db_con.cursor()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for result in executor.map(fetch_data, servers):
-                save_data(db_cur, result)
+                write_data(db_cur, result)
+            executor.shutdown(wait=True)
         db_con.commit()
         db_cur.close()
+        log.debug('saved to db')
         time.sleep(ARGS.check_delay)
