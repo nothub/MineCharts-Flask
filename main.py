@@ -188,11 +188,10 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == '__main__':
     args = parse_args()
-    log.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log.DEBUG)
+    log.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log.INFO)
     log.info('starting with args: ' + str(args))
     gobbler_thread = Thread(target=gobbler.init, args=[args])
     gobbler_thread.setDaemon(True)
     gobbler_thread.start()
-    # app.run(debug=True, host='0.0.0.0')
     proc = sp.run(['gunicorn', '-w', '4', '-b', '127.0.0.1:5000', 'main:app'])
     log.debug('stderr: ' + str(proc.stderr), file=sys.stderr)
