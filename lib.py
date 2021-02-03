@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 
 
 def non_empty_string_type(s):
@@ -20,3 +21,10 @@ def min_1000_int(n):
     if n < 1000:
         raise argparse.ArgumentTypeError("invalid argument! value should be >= 1000")
     return n
+
+
+def str_to_file_path(s: str):
+    path = Path(s)
+    if path is None or (path.exists() and not path.is_file()):
+        raise argparse.ArgumentTypeError("invalid argument! path is not a valid file path")
+    return path

@@ -64,13 +64,14 @@ def init(args: Namespace):
     ARGS = args
     servers = parse_servers()
     log.info('monitoring ' + str(len(servers)) + ' servers: ' + str(servers))
-    db_con = db_init(ARGS.db_file)
+    db_con = db_init(ARGS.db_path)
     while True:
         db_cur = db_con.cursor()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for result in executor.map(fetch_data, servers):
                 write_data(db_cur, result)
             executor.shutdown(wait=True)
+        # is this a race condition?
         db_con.commit()
         db_cur.close()
         log.debug('saved to db')

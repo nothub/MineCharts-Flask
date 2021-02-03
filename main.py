@@ -4,6 +4,9 @@ import logging as log
 import os
 import random
 import sqlite3
+import subprocess as sp
+import sys
+from pathlib import Path
 from threading import *
 
 from flask import Flask, jsonify, make_response, send_from_directory
@@ -11,7 +14,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 import gobbler
-from lib import non_empty_string_type, positive_int_type, min_1000_int
+from lib import non_empty_string_type, positive_int_type, min_1000_int, str_to_file_path
 
 FRESH_PRINCE = [
     "Now, this is a story all about how",
@@ -105,7 +108,7 @@ def err_handler_429(error):
 
 @app.route('/servers')
 def api_servers():
-    cur = sqlite3.connect(args.db_file).cursor()
+    cur = sqlite3.connect(args.db_path).cursor()
     cur.execute('SELECT address FROM servers order by address')
     return jsonify(cur.fetchall())
 
@@ -113,7 +116,7 @@ def api_servers():
 @app.route('/servers/<address>')
 @api_limiter.limit('1/second,20/minute')
 def api_servers_data(address):
-    cur = sqlite3.connect(args.db_file).cursor()
+    cur = sqlite3.connect(args.db_path).cursor()
     cur.execute('SELECT time, players, ping FROM data WHERE address = (?) ORDER BY time DESC', [address])
     return jsonify(cur.fetchall())
 
@@ -139,13 +142,13 @@ def parse_args() -> argparse.Namespace:
         help='servers to be monitored, supplied as url'
     )
     parser.add_argument(
-        '-db', '--db-file',
+        '-db', '--db-path',
         action='store',
-        type=non_empty_string_type,
+        type=str_to_file_path,
         required=False,
-        default='data.db',
-        metavar='FILE',
-        help='name of database file, defaults to data.db'
+        default=Path('data.db'),
+        metavar='PATH',
+        help='path of database file, defaults to data.db'
     )
     parser.add_argument(
         '--check-delay',
@@ -190,4 +193,6 @@ if __name__ == '__main__':
     gobbler_thread = Thread(target=gobbler.init, args=[args])
     gobbler_thread.setDaemon(True)
     gobbler_thread.start()
-    app.run(debug=True, host='0.0.0.0')
+    # app.run(debug=True, host='0.0.0.0')
+    proc = sp.run(['gunicorn', '-w', '4', '-b', '127.0.0.1:5000', 'main:app'])
+    log.debug('stderr: ' + str(proc.stderr), file=sys.stderr)
