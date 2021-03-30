@@ -1,5 +1,5 @@
 Flask-Limiter~=1.4
 Flask~=1.1.2
 gunicorn~=20.0.4
-mcstatus~=5.1.1
+mcstatus~=5.1.2
 requests~=2.25.1
