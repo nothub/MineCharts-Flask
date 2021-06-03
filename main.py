@@ -9,12 +9,12 @@ from typing import List
 
 from flask import Flask, jsonify, request, render_template
 from flask_limiter import Limiter
-from parser_types import non_empty_string_type, positive_int_type, network_port_type
 from requests import get
 from werkzeug.exceptions import HTTPException
 
 import db
 import gobbler
+from parser_types import non_empty_string_type, positive_int_type, network_port_type
 
 GENERIC_ERRORS = [
     'Oops! Something went wrong.',
@@ -26,7 +26,7 @@ GENERIC_ERRORS = [
     ':(){ :|:& };:',
 ]
 
-log.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log.INFO)
+log.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log.DEBUG)
 
 app = Flask(__name__)
 
@@ -117,13 +117,12 @@ if __name__ == '__main__':
     args = parse_args()
     log.info('starting with args: ' + str(args))
 
-    merged: List[str] = args.servers
+    servers: List[str] = args.servers
     if args.servers_url is not None:
+        # TODO: validate URL
         log.debug('downloading servers file from: ' + args.servers_url)
-        merged = merged + get(args.servers_url).text.splitlines()
-    # TODO: validate URL
-    merged.sort()
-    servers = merged
+        servers = servers + get(args.servers_url).text.splitlines()
+    servers.sort()
     log.info('monitoring ' + str(len(servers)) + ' servers: ' + str(servers))
 
     gobbler = gobbler.Gobbler(servers, db)
