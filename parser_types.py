@@ -9,17 +9,17 @@ def non_empty_string_type(s):
     return s
 
 
-def positive_int_type(n):
+def positive_int_type(n: str) -> int:
     n = int(n)
     if n <= 0:
-        raise argparse.ArgumentTypeError("invalid argument! value should be positive")
+        raise argparse.ArgumentTypeError("invalid argument: value negative")
     return n
 
 
-def min_1000_int(n):
+def network_port_type(n: str) -> int:
     n = int(n)
-    if n < 1000:
-        raise argparse.ArgumentTypeError("invalid argument! value should be >= 1000")
+    if n < 1 or n > 65535:
+        raise argparse.ArgumentTypeError("invalid argument: value out of range")
     return n
 
 

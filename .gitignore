@@ -4,25 +4,16 @@
 !*/
 
 # git
-!/**/.gitkeep
 !/.gitignore
 
 # github
 !/.github/**
 
-# idea
-!/.idea/runConfigurations/**
-
 # python
 !/*.py
 !/requirements.txt
 
-# docker
-!/Dockerfile
-!/.dockerignore
-
-# misc
-!/**/*.md
-!/**/.editorconfig
+# flask
 !/assets/**
-!/tests/**
+!/static/**
+!/templates/**

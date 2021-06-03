@@ -1,124 +1,75 @@
 #!/usr/bin/env python3
 import argparse
 import logging as log
-import os
 import random
-import sqlite3
 import subprocess as sp
 import sys
-from pathlib import Path
 from threading import *
 
-from flask import Flask, jsonify, make_response, send_from_directory
+from flask import Flask, jsonify, request, render_template
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from werkzeug.exceptions import HTTPException
 
+import db
 import gobbler
-from lib import non_empty_string_type, positive_int_type, min_1000_int, str_to_file_path
+from parser_types import non_empty_string_type, positive_int_type, network_port_type
 
-FRESH_PRINCE = [
-    "Now, this is a story all about how",
-    "My life got flipped-turned upside down",
-    "And I'd like to take a minute",
-    "Just sit right there",
-    "I'll tell you how I became the prince of a town called Bel Air",
+GENERIC_ERRORS = [
+    'Oops! Something went wrong.',
+    'Google Chrome quit unexpectedly.',
+    'Changing gamemode is not allowed!',
+    'Donkeys have been disabled due to an exploit!',
+    'Keyboard not found press F1 to resume.',
+    'Task failed successfully.',
+    ':(){ :|:& };:',
+]
 
-    "In west Philadelphia born and raised",
-    "On the playground was where I spent most of my days",
-    "Chillin' out maxin' relaxin' all cool",
-    "And all shootin some b-ball outside of the school",
-    "When a couple of guys who were up to no good",
-    "Started making trouble in my neighborhood",
-    "I got in one little fight and my mom got scared",
-    "She said 'You're movin' with your auntie and uncle in Bel Air'",
-
-    "I begged and pleaded with her day after day",
-    "But she packed my suit case and sent me on my way",
-    "She gave me a kiss and then she gave me my ticket.",
-    "I put my Walkman on and said, 'I might as well kick it'.",
-
-    "First class, yo this is bad",
-    "Drinking orange juice out of a champagne glass.",
-    "Is this what the people of Bel-Air living like?",
-    "Hmmmmm this might be alright.",
-
-    "But wait I hear they're prissy, bourgeois, all that",
-    "Is this the type of place that they just send this cool cat?",
-    "I don't think so",
-    "I'll see when I get there",
-    "I hope they're prepared for the prince of Bel-Air",
-
-    "Well, the plane landed and when I came out",
-    "There was a dude who looked like a cop standing there with my name out",
-    "I ain't trying to get arrested yet",
-    "I just got here",
-    "I sprang with the quickness like lightning, disappeared",
-
-    "I whistled for a cab and when it came near",
-    "The license plate said fresh and it had dice in the mirror",
-    "If anything I could say that this cab was rare",
-    "But I thought 'Nah, forget it' - 'Yo, homes to Bel Air'",
-
-    "I pulled up to the house about 7 or 8",
-    "And I yelled to the cabbie 'Yo homes smell ya later'",
-    "I looked at my kingdom",
-    "I was finally there",
-    "To sit on my throne as the Prince of Bel Air"]
+log.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log.INFO)
 
 app = Flask(__name__)
 
-# noinspection PyTypeChecker
-api_limiter = Limiter(
+db = db.DB()
+
+
+def get_ip_proxied():
+    ip = str(request.remote_addr)
+    if ip is None or ip == '127.0.0.1':
+        ip = str(request.environ.get('HTTP_X_REAL_IP', request.remote_addr))
+    if ip is None or ip == '127.0.0.1':
+        ip = str(request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr))
+    return ip or '127.0.0.1'
+
+
+limiter = Limiter(
     app,
-    key_func=get_remote_address,
-    default_limits=['4/second,60/minute']
+    key_func=get_ip_proxied,
+    default_limits=['4 per second, 60 per minute']
 )
 
 
-# handler args:
-# a = request.args.get('a', default = 1, type = int)
-# b = request.args.get('b', default = 'b', type = str)
-
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
-    return 'index'
+    return render_template('index.html', title='Index', servers=(db.get_servers()))
 
 
-@app.route('/favicon.ico')
-@api_limiter.limit('1/second,60/minute')
-def favicon():
-    return send_from_directory(
-        os.path.join(app.root_path, 'assets/images'),
-        'favicon.ico',
-        mimetype='image/vnd.microsoft.icon'
-    )
-
-
-@app.errorhandler(404)
-def err_handler_404(error):
-    log.warning(str(error))
-    return make_response(random.choice(FRESH_PRINCE), 418)
-
-
-@app.errorhandler(429)
-def err_handler_429(error):
-    log.warning(str(error))
-    return make_response(random.choice(FRESH_PRINCE), 418)
-
-
-@app.route('/servers')
+@app.route('/servers', methods=['GET'])
 def api_servers():
-    cur = sqlite3.connect(args.db_path).cursor()
-    cur.execute('SELECT address FROM servers order by address')
-    return jsonify(cur.fetchall())
+    return jsonify(db.get_servers())
 
 
-@app.route('/servers/<address>')
-@api_limiter.limit('1/second,20/minute')
+@app.route('/servers/<address>', methods=['GET'])
+@limiter.limit('1/second,20/minute')
 def api_servers_data(address):
-    cur = sqlite3.connect(args.db_path).cursor()
-    cur.execute('SELECT time, players, ping FROM data WHERE address = (?) ORDER BY time DESC', [address])
-    return jsonify(cur.fetchall())
+    return jsonify(db.get_data(address))
+
+
+@app.errorhandler(Exception)
+def error_handler(exception: Exception):
+    code = 418
+    log.warning(str(exception))
+    if isinstance(exception, HTTPException) and exception.code < 500:
+        code = exception.code
+    return render_template('error.html', title=str(code), text=str(code) + ' - ' + random.choice(GENERIC_ERRORS))
 
 
 def parse_args() -> argparse.Namespace:
@@ -142,56 +93,31 @@ def parse_args() -> argparse.Namespace:
         help='servers to be monitored, supplied as url'
     )
     parser.add_argument(
-        '-db', '--db-path',
+        '-p', '--port',
         action='store',
-        type=str_to_file_path,
+        type=network_port_type,
         required=False,
-        default=Path('data.db'),
-        metavar='PATH',
-        help='path of database file, defaults to data.db'
+        default=5000,
+        help='port'
     )
     parser.add_argument(
-        '--check-delay',
+        '-w', '--workers',
         action='store',
         type=positive_int_type,
         required=False,
-        default=10,
-        metavar='SEC',
-        help='min delay between checks in seconds, defaults to 10'
-    )
-    parser.add_argument(
-        '--max-entries',
-        action='store',
-        type=min_1000_int,
-        required=False,
-        default=10000,
-        metavar='MAX',
-        help='max amount of db entries per server, defaults to 10000'
-    )
-    parser.add_argument(
-        '--disable-autoclean',
-        action='store_true',
-        required=False,
-        help='disables the automatic db cleanup'
-    )
-    parser.add_argument(  # TODO: unused
-        '--max-response-entries',
-        action='store',
-        type=positive_int_type,
-        required=False,
-        default=1000,
-        metavar='MAX',
-        help='max amount of entries per response, defaults to 1000'
+        default=4,
+        help='gunicorn workers'
     )
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = parse_args()
-    log.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log.INFO)
     log.info('starting with args: ' + str(args))
-    gobbler_thread = Thread(target=gobbler.init, args=[args])
+
+    gobbler_thread = Thread(target=gobbler.init, args=[args.servers, args.servers_url])
     gobbler_thread.setDaemon(True)
     gobbler_thread.start()
-    proc = sp.run(['gunicorn', '-w', '4', '-b', '127.0.0.1:5000', 'main:app'])
+
+    proc = sp.run(['gunicorn', '-b', '127.0.0.1:' + str(args.port), '--workers', str(args.workers), 'main:app'])
     log.debug('stderr: ' + str(proc.stderr), file=sys.stderr)

@@ -1,0 +1,44 @@
+main {
+    hyphens: auto
+}
+
+body {
+    background-color: #002b36;
+    text-align: center;
+}
+
+pre {
+    color: #839496;
+    font-size: 90%;
+}
+
+textarea {
+    padding: 1em;
+    width: 60%;
+}
+
+footer {
+    opacity: 1;
+    background-color: #073642;
+    color: #839496;
+    font: 1em/1.4 monospace;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+}
+
+.box {
+    background-color: #073642;
+    color: #839496;
+    border: 1px dashed #657b83;
+    outline: 0 none;
+    font: 1em/1.4 monospace;
+    text-align: left;
+}
+
+::placeholder {
+    color: #839496;
+    opacity: 0.4;
+}
