@@ -23,35 +23,47 @@
 {% endblock %}
 {% block js_body %}
     <script>
+
+        function getServerColor(address) {
+            // minetracks color scheme:
+            // https://github.com/Cryptkeeper/Minetrack/blob/af2301495ec015efdbc994391c0732db2d5df19c/main.js#L15
+            let seed = 0
+            for (let i = address.length - 1; i >= 0; i--) {
+                seed = address.charCodeAt(i) + ((seed << 5) - seed)
+            }
+            const color = Math.floor(Math.abs((Math.sin(seed) * 10000) % 1 * 16777216)).toString(16)
+            return '#' + Array(6 - color.length + 1).join('0') + color
+        }
+
         window.onload = function () {
+
+            let bg_colors = [];
+
+            {% for server in servers %}
+                bg_colors.push(getServerColor({{ server | tojson }}))
+            {% endfor %}
 
             const data = {
                 labels: {{ servers | tojson }},
                 datasets: [{
                     label: 'player',
                     data: {{ player | tojson }},
-                    fill: false,
-                    borderColor: 'rgb(103, 140, 177)',
-                    pointBackgroundColor: 'rgb(38, 139, 210)',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgb(38, 139, 210)'
+                    hoverOffset: -32,
+                    backgroundColor: bg_colors
                 }]
             };
 
             const ctx = document.getElementById('chart');
+            Chart.defaults.plugins.legend = false
             const chart = new Chart(ctx, {
-                type: 'radar',
+                type: 'doughnut',
                 data: data,
                 options: {
+                    legend: {
+                        display: false
+                    },
                     responsive: true,
-                    maintainAspectRatio: false,
-                    elements: {
-                        line: {
-                            borderWidth: 1,
-                            suggestedMax: 100
-                        }
-                    }
+                    maintainAspectRatio: false
                 },
             });
 
