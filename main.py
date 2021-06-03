@@ -2,6 +2,7 @@
 import argparse
 import logging as log
 import random
+import re
 import subprocess as sp
 import sys
 from threading import *
@@ -42,6 +43,12 @@ def get_ip_proxied():
     return ip or '127.0.0.1'
 
 
+def alphabetic(s: str) -> str:
+    return re.sub(r"[^A-Za-z0-9]", "", s)
+
+
+app.add_template_filter(alphabetic)
+
 limiter = Limiter(
     app,
     key_func=get_ip_proxied,
@@ -51,16 +58,12 @@ limiter = Limiter(
 
 @app.route('/', methods=['GET'])
 def index():
-    players = db.get_latest_players()
-    ping = db.get_latest_ping()
-    log.info(str(players))
     return render_template(
         'index.html',
         title='Index',
         servers=(db.get_servers()),
+        players=(db.get_latest_players()),
         data=data_snapshot(1),
-        player=players,
-        ping=ping
     )
 
 
@@ -82,7 +85,7 @@ def api_ping():
 
 
 @app.route('/servers/<address>', methods=['GET'])
-@limiter.limit('1/second,20/minute')
+@limiter.limit('100/second')
 def api_servers_data(address):
     return jsonify(db.get_data(address))
 

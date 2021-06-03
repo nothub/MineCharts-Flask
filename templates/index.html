@@ -5,7 +5,7 @@
 {% endblock %}
 {% block content %}
     <div style="height: 400px">
-        <canvas id="chart"></canvas>
+        <canvas id="chart_overview"></canvas>
     </div>
     <br>
     {% for server in servers %}
@@ -17,6 +17,7 @@
                 <p>user: {{ data[server][0][1] }}</p>
                 <p>ping: {{ data[server][0][2] }} ms</p>
             {% endif %}
+            <canvas id="chart_{{ server | alphabetic }}"></canvas>
         </div>
         <br>
     {% endfor %}
@@ -37,27 +38,28 @@
 
         window.onload = function () {
 
-            let bg_colors = [];
+            Chart.defaults.plugins.legend = false
 
+            // overview chart
+
+            let bg_colors = [];
             {% for server in servers %}
                 bg_colors.push(getServerColor({{ server | tojson }}))
             {% endfor %}
 
-            const data = {
+            const data_overview = {
                 labels: {{ servers | tojson }},
                 datasets: [{
                     label: 'player',
-                    data: {{ player | tojson }},
+                    data: {{ players | tojson }},
                     hoverOffset: -32,
                     backgroundColor: bg_colors
                 }]
             };
 
-            const ctx = document.getElementById('chart');
-            Chart.defaults.plugins.legend = false
-            const chart = new Chart(ctx, {
+            const chart_overview = new Chart(document.getElementById('chart_overview'), {
                 type: 'doughnut',
-                data: data,
+                data: data_overview,
                 options: {
                     legend: {
                         display: false
@@ -66,6 +68,68 @@
                     maintainAspectRatio: false
                 },
             });
+
+            // server charts
+
+            {% for server in servers %}
+
+                fetch('./servers/{{ server }}').then(function (response) {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return Promise.reject(response);
+                    }
+                }).then(function (data) {
+
+                    let times_{{ server | alphabetic }} = data
+                            .map(function (entry) {
+                                return entry[0];
+                            });
+
+                    let players_{{ server | alphabetic }} = data
+                            .map(function (entry) {
+                                return entry[1];
+                            });
+
+                    let pings_{{ server | alphabetic }} = data
+                            .map(function (entry) {
+                                return entry[2];
+                            });
+
+                    const data_{{ server | alphabetic }} = {
+                        labels: ['players', 'pings'],
+                        datasets: [{
+                            label: 'players',
+                            data: players_{{ server | alphabetic }},
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        }, {
+                            label: 'pings',
+                            data: pings_{{ server | alphabetic }},
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        }]
+                    };
+
+                    const chart_{{ server | alphabetic }} = new Chart(document.getElementById('chart_{{ server | alphabetic }}'), {
+                        type: 'line',
+                        data: data_{{ server | alphabetic }},
+                        options: {
+                            legend: {
+                                display: false
+                            },
+                            responsive: true,
+                            maintainAspectRatio: false
+                        },
+                    });
+
+                }).catch(function (err) {
+                    console.warn('error while fetching data for {{ server }}', err);
+                });
+
+            {% endfor %}
 
         }
 
