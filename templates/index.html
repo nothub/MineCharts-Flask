@@ -1,6 +1,13 @@
 {% extends "base.html" %}
 {% block title %}{{ title }}{% endblock %}
+{% block js_head %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
 {% block content %}
+    <div style="height: 400px">
+        <canvas id="chart"></canvas>
+    </div>
+    <br>
     {% for server in servers %}
         <div class="box">
             <h2>{{ server }}</h2>
@@ -13,4 +20,52 @@
         </div>
         <br>
     {% endfor %}
+{% endblock %}
+{% block js_body %}
+    <script>
+        window.onload = function () {
+
+            const data = {
+                labels: {{ servers | tojson }},
+                datasets: [{
+                    label: 'player',
+                    data: {{ player | tojson }},
+                    fill: true,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgb(255, 99, 132)',
+                    pointBackgroundColor: 'rgb(255, 99, 132)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(255, 99, 132)'
+                }, {
+                    label: 'ping',
+                    data: {{ ping | tojson }},
+                    fill: true,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgb(54, 162, 235)',
+                    pointBackgroundColor: 'rgb(54, 162, 235)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(54, 162, 235)'
+                }]
+            };
+
+            const ctx = document.getElementById('chart');
+            const chart = new Chart(ctx, {
+                type: 'radar',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        line: {
+                            borderWidth: 3
+                        }
+                    }
+                },
+            });
+
+        }
+
+    </script>
 {% endblock %}

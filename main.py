@@ -26,7 +26,7 @@ GENERIC_ERRORS = [
     ':(){ :|:& };:',
 ]
 
-log.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log.DEBUG)
+log.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log.INFO)
 
 app = Flask(__name__)
 
@@ -51,12 +51,34 @@ limiter = Limiter(
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html', title='Index', servers=(db.get_servers()), data=data_snapshot(1))
+    players = db.get_latest_players()
+    ping = db.get_latest_ping()
+    log.info(str(players))
+    return render_template(
+        'index.html',
+        title='Index',
+        servers=(db.get_servers()),
+        data=data_snapshot(1),
+        player=players,
+        ping=ping
+    )
 
 
 @app.route('/servers', methods=['GET'])
 def api_servers():
     return jsonify(db.get_servers())
+
+
+@app.route('/players', methods=['GET'])
+@limiter.limit('1/second,20/minute')
+def api_players():
+    return jsonify(db.get_latest_players())
+
+
+@app.route('/ping', methods=['GET'])
+@limiter.limit('1/second,20/minute')
+def api_ping():
+    return jsonify(db.get_latest_ping())
 
 
 @app.route('/servers/<address>', methods=['GET'])
