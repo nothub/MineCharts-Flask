@@ -22,18 +22,29 @@ def poll_server(address: str) -> Tuple[str, Optional[int], Optional[int]]:
 class Gobbler:
     __servers: List[str]
     __db: db.DB
+    __active: bool = True
 
     def __init__(self, servers: List[str], db: db.DB):
         self.__servers = servers
         self.__db = db
 
+    def shutdown(self):
+        self.__active = False
+
     def init(self):
-        while True:
+        while self.__active:
+            time_start = time.time()
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 for result in executor.map(poll_server, self.__servers):
                     address, players, ping = result
                     self.__db.write_data(address, players, ping)
                 executor.shutdown(wait=True)
-            # is this a race condition?
             log.debug('saved to db')
-            time.sleep(10)
+            time_total = time.time() - time_start
+            log.debug('polled servers in: ' + str(time_total) + '/15 seconds')
+            if time_total > 15:
+                log.warning('polling server data took very long: ' + str(time_total) + '/15 seconds')
+                log.warning('consider increasing the polling delay!')
+                time.sleep(1)
+            else:
+                time.sleep(15 - time_total)
