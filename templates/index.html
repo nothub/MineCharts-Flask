@@ -30,23 +30,12 @@
                 datasets: [{
                     label: 'player',
                     data: {{ player | tojson }},
-                    fill: true,
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'rgb(255, 99, 132)',
-                    pointBackgroundColor: 'rgb(255, 99, 132)',
+                    fill: false,
+                    borderColor: 'rgb(103, 140, 177)',
+                    pointBackgroundColor: 'rgb(38, 139, 210)',
                     pointBorderColor: '#fff',
                     pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgb(255, 99, 132)'
-                }, {
-                    label: 'ping',
-                    data: {{ ping | tojson }},
-                    fill: true,
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgb(54, 162, 235)',
-                    pointBackgroundColor: 'rgb(54, 162, 235)',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgb(54, 162, 235)'
+                    pointHoverBorderColor: 'rgb(38, 139, 210)'
                 }]
             };
 
@@ -59,7 +48,8 @@
                     maintainAspectRatio: false,
                     elements: {
                         line: {
-                            borderWidth: 3
+                            borderWidth: 1,
+                            suggestedMax: 100
                         }
                     }
                 },
