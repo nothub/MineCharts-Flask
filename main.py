@@ -5,14 +5,16 @@ import random
 import subprocess as sp
 import sys
 from threading import *
+from typing import List
 
 from flask import Flask, jsonify, request, render_template
 from flask_limiter import Limiter
+from parser_types import non_empty_string_type, positive_int_type, network_port_type
+from requests import get
 from werkzeug.exceptions import HTTPException
 
 import db
 import gobbler
-from parser_types import non_empty_string_type, positive_int_type, network_port_type
 
 GENERIC_ERRORS = [
     'Oops! Something went wrong.',
@@ -115,7 +117,18 @@ if __name__ == '__main__':
     args = parse_args()
     log.info('starting with args: ' + str(args))
 
-    gobbler_thread = Thread(target=gobbler.init, args=[args.servers, args.servers_url])
+    merged: List[str] = args.servers
+    if args.servers_url is not None:
+        log.debug('downloading servers file from: ' + args.servers_url)
+        merged = merged + get(args.servers_url).text.splitlines()
+    # TODO: validate URL
+    merged.sort()
+    servers = merged
+    log.info('monitoring ' + str(len(servers)) + ' servers: ' + str(servers))
+
+    gobbler = gobbler.Gobbler(servers, db)
+
+    gobbler_thread = Thread(target=gobbler.init)
     gobbler_thread.setDaemon(True)
     gobbler_thread.start()
 
