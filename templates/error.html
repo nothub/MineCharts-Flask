@@ -1,5 +1,8 @@
 {% extends "base.html" %}
-{% block title %}{{ title }}{% endblock %}
+{% block title %}{{ code }}{% endblock %}
 {% block content %}
-    <textarea readonly class="box" rows="24">{{ text }}</textarea>
+    <div class="box" style="text-align:center; min-height: 0;">
+        <h2>{{ code }}</h2>
+        <h3>{{ text }}</h3>
+    </div>
 {% endblock %}

@@ -5,7 +5,7 @@ import random
 import subprocess as sp
 import sys
 from threading import *
-from typing import List
+from typing import List, Dict, Tuple, Optional
 
 from flask import Flask, jsonify, request, render_template
 from flask_limiter import Limiter
@@ -51,7 +51,7 @@ limiter = Limiter(
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html', title='Index', servers=(db.get_servers()))
+    return render_template('index.html', title='Index', servers=(db.get_servers()), data=data_snapshot(1))
 
 
 @app.route('/servers', methods=['GET'])
@@ -71,7 +71,14 @@ def error_handler(exception: Exception):
     log.warning(str(exception))
     if isinstance(exception, HTTPException) and exception.code < 500:
         code = exception.code
-    return render_template('error.html', title=str(code), text=str(code) + ' - ' + random.choice(GENERIC_ERRORS))
+    return render_template('error.html', code=str(code), text=random.choice(GENERIC_ERRORS))
+
+
+def data_snapshot(entries: int) -> Dict[str, List[Tuple[int, Optional[int], Optional[int]]]]:
+    snapshot = dict()
+    for server in db.get_servers():
+        snapshot[server] = db.get_data(server, entries)
+    return snapshot
 
 
 def parse_args() -> argparse.Namespace:
@@ -126,7 +133,6 @@ if __name__ == '__main__':
     log.info('monitoring ' + str(len(servers)) + ' servers: ' + str(servers))
 
     gobbler = gobbler.Gobbler(servers, db)
-
     gobbler_thread = Thread(target=gobbler.init)
     gobbler_thread.setDaemon(True)
     gobbler_thread.start()

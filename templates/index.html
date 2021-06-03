@@ -4,8 +4,13 @@
     {% for server in servers %}
         <div class="box">
             <h2>{{ server }}</h2>
-            <p>foo</p>
-            <p>bar</p>
+            {% if data[server][0][1] == None or data[server][0][2] == None %}
+                <p style="color: #DC322F">DOWN</p>
+            {% else %}
+                <p>user: {{ data[server][0][1] }}</p>
+                <p>ping: {{ data[server][0][2] }} ms</p>
+            {% endif %}
         </div>
+        <br>
     {% endfor %}
 {% endblock %}

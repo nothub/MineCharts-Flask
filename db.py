@@ -1,7 +1,20 @@
 import logging as log
 import sqlite3
 import time
-from typing import Optional, List
+from sqlite3 import Connection
+from typing import Optional, List, Tuple
+
+
+def cursor_server(con):
+    cur = con.cursor()
+    cur.execute('SELECT address FROM servers order by address')
+    return cur
+
+
+def cursor_data(address: str, con: Connection, entries: int):
+    cur = con.cursor()
+    cur.execute('SELECT time, players, ping FROM data WHERE address = (?) ORDER BY time DESC LIMIT (?)', [address, entries])
+    return cur
 
 
 class DB:
@@ -30,15 +43,11 @@ class DB:
 
     def get_servers(self) -> List[str]:
         with sqlite3.connect(self.__db_file) as con:
-            cur = con.cursor()
-            cur.execute('SELECT address FROM servers order by address')
-            return [i[0] for i in cur.fetchall()]
+            return [i[0] for i in cursor_server(con).fetchall()]
 
-    def get_data(self, address) -> list:
+    def get_data(self, address: str, entries: int = 240) -> List[Tuple[int, Optional[int], Optional[int]]]:
         with sqlite3.connect(self.__db_file) as con:
-            cur = con.cursor()
-            cur.execute('SELECT time, players, ping FROM data WHERE address = (?) ORDER BY time DESC', [address])
-            return [i[0] for i in cur.fetchall()]
+            return cursor_data(address, con, entries).fetchall()
 
     def write_data(self, address: str, players: Optional[int], ping: Optional[int]):
         with sqlite3.connect(self.__db_file) as con:
