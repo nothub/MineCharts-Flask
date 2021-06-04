@@ -193,7 +193,9 @@
                                 type: 'line',
                                 data: {
                                     labels: data.map(function (entry) {
-                                        return entry[0];
+                                        const date = new Date(0);
+                                        date.setUTCSeconds(entry[0]);
+                                        return date.toISOString();
                                     }),
                                     datasets: [{
                                         label: 'players',

@@ -17,8 +17,6 @@
 
 ### server charts
 
-- dates as human readable
-- hide date labels
 - updating charts
 
 ---
