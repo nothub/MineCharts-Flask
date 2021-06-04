@@ -1,17 +1,27 @@
 {% extends "base.html" %}
+
 {% block title %}{{ title }}{% endblock %}
+
 {% block head %}
     {{ super() }}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
+
 {% block body %}
-    {% for server in servers %}
-        <a href="./#{{ server }}">{{ server }}</a>
-    {% endfor %}
+
+    <button onclick="scroll_top()" class="box" id="button_scroll_top" title="top">top</button>
+
+    <ul class="box" id="server_list" style="text-align: left">
+        {% for server in servers %}
+            <li style="margin: 0.4em"><a href="./#{{ server }}">{{ server }}</a></li>
+        {% endfor %}
+    </ul>
+
     <div style="height: 400px">
         <canvas id="chart_overview"></canvas>
     </div>
     <br>
+
     {% for server in servers %}
         <div class="box" id="{{ server }}" style="width: 850px">
             <div>
@@ -28,7 +38,7 @@
         </div>
         <br>
     {% endfor %}
-    <button onclick="scroll_top()" class="box" id="button_scroll_top" title="top">top</button>
+
     <script>
 
         function getServerColor(address) {
@@ -55,15 +65,14 @@
             }
         };
 
+        let server_colors = [];
+        {% for server in servers %}
+            server_colors.push(getServerColor({{ server | tojson }}))
+        {% endfor %}
+
         window.onload = function () {
 
             Chart.defaults.plugins.legend = false
-
-            // overview chart
-            let bg_colors = [];
-            {% for server in servers %}
-                bg_colors.push(getServerColor({{ server | tojson }}))
-            {% endfor %}
 
             let chart_overview_canvas = document.getElementById('chart_overview');
             const chart_overview = new Chart(chart_overview_canvas, {
@@ -74,7 +83,7 @@
                         label: 'player',
                         data: {{ players | tojson }},
                         hoverOffset: -32,
-                        backgroundColor: bg_colors
+                        backgroundColor: server_colors
                     }]
                 },
                 options: {
@@ -91,7 +100,6 @@
                 if (points.length) document.getElementById(chart_overview.data.labels[points[0].index]).scrollIntoView();
             }
 
-            // server charts
             {% for server in servers %}
                 fetch('./servers/{{ server }}').then(function (response) {
                     if (response.ok) {
@@ -137,5 +145,7 @@
                 });
             {% endfor %}
         }
+
     </script>
+
 {% endblock %}
