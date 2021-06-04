@@ -10,7 +10,8 @@
 
 ### db
 
-- auto delete server records older then 1 month
+- auto delete server records older-then 1 month
+- auto delete servers unreachable for a week
 
 ---
 
