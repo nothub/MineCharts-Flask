@@ -9,15 +9,19 @@
     </div>
     <br>
     {% for server in servers %}
-        <div class="box">
-            <h2>{{ server }}</h2>
-            {% if data[server][0][1] == None or data[server][0][2] == None %}
-                <h3 style="color: #DC322F">DOWN</h3>
-            {% else %}
-                <p>user: {{ data[server][0][1] }}</p>
-                <p>ping: {{ data[server][0][2] }} ms</p>
-            {% endif %}
-            <canvas id="chart_{{ server | alphabetic }}"></canvas>
+        <div class="box" style="width: 850px">
+            <div>
+                <h2>{{ server }}</h2>
+                {% if data[server][0][1] == None or data[server][0][2] == None %}
+                    <h3 style="color: #DC322F">DOWN</h3>
+                {% else %}
+                    <p>user: {{ data[server][0][1] }}</p>
+                    <p>ping: {{ data[server][0][2] }} ms</p>
+                {% endif %}
+            </div>
+            <div>
+                <canvas id="chart_{{ server | alphabetic }}" width="850"></canvas>
+            </div>
         </div>
         <br>
     {% endfor %}
