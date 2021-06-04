@@ -94,41 +94,44 @@
 
             Chart.defaults.plugins.legend = false
 
-            fetch('./players').then(function (response) {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    return Promise.reject(response);
-                }
-            }).then(function (data) {
+            fetch('./players')
+                    .then(function (response) {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            return Promise.reject(response);
+                        }
+                    })
+                    .then(data => obj = data)
+                    .then(() => {
 
-                let chart_overview_canvas = document.getElementById('chart_overview');
-                const chart_overview = new Chart(chart_overview_canvas, {
-                    type: 'doughnut',
-                    data: {
-                        labels: {{ servers | tojson }},
-                        datasets: [{
-                            label: 'players',
-                            data: data,
-                            backgroundColor: server_colors,
-                            borderWidth: 0,
-                            hoverBorderWidth: 1,
-                            hoverBorderColor: '#002B36',
-                            hoverOffset: -32,
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                    },
-                });
+                        let chart_overview_canvas = document.getElementById('chart_overview');
+                        const chart_overview = new Chart(chart_overview_canvas, {
+                            type: 'doughnut',
+                            data: {
+                                labels: Object.keys(obj),
+                                datasets: [{
+                                    label: 'players',
+                                    data: Object.values(obj),
+                                    backgroundColor: server_colors,
+                                    borderWidth: 0,
+                                    hoverBorderWidth: 1,
+                                    hoverBorderColor: '#002B36',
+                                    hoverOffset: -32,
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                            },
+                        });
 
-                chart_overview_canvas.onclick = function (e) {
-                    const points = chart_overview.getElementsAtEventForMode(e, 'nearest', {intersect: true}, true);
-                    if (points.length) document.getElementById(chart_overview.data.labels[points[0].index]).scrollIntoView();
-                }
+                        chart_overview_canvas.onclick = function (e) {
+                            const points = chart_overview.getElementsAtEventForMode(e, 'nearest', {intersect: true}, true);
+                            if (points.length) document.getElementById(chart_overview.data.labels[points[0].index]).scrollIntoView();
+                        }
 
-            }).catch(function (err) {
+                    }).catch(function (err) {
                 console.warn('error while fetching player data', err);
             });
 
@@ -142,7 +145,6 @@
                     })
                     .then(data => obj = data)
                     .then(() => {
-                        console.log(obj)
                         {%  for server in servers %}
                             setPing({{ server | alphabetic | tojson }}, obj[{{ server | tojson }}])
                         {% endfor %}
@@ -171,39 +173,41 @@
 
             {% for server in servers %}
 
-                fetch('./players/{{ server }}').then(function (response) {
-                    if (response.ok) {
-                        return response.json();
-                    } else {
-                        return Promise.reject(response);
-                    }
-                }).then(function (data) {
+                fetch('./players/{{ server }}')
+                        .then(function (response) {
+                            if (response.ok) {
+                                return response.json();
+                            } else {
+                                return Promise.reject(response);
+                            }
+                        })
+                        .then(function (data) {
 
-                    let chart_{{ server | alphabetic }}_canvas = document.getElementById('chart_{{ server | alphabetic }}');
-                    chart_{{ server | alphabetic }}_canvas.height = 300;
-                    const chart_{{ server | alphabetic }} = new Chart(chart_{{ server | alphabetic }}_canvas, {
-                        type: 'line',
-                        data: {
-                            labels: data.map(function (entry) {
-                                return entry[0];
-                            }),
-                            datasets: [{
-                                label: 'players',
-                                data: data.map(function (entry) {
-                                    return entry[1];
-                                }),
-                                fill: true,
-                                borderColor: getServerColor({{ server | tojson }}),
-                                tension: 0.1,
-                            }]
-                        },
-                        options: {
-                            responsive: false,
-                            maintainAspectRatio: false,
-                        },
-                    });
+                            let chart_{{ server | alphabetic }}_canvas = document.getElementById('chart_{{ server | alphabetic }}');
+                            chart_{{ server | alphabetic }}_canvas.height = 300;
+                            const chart_{{ server | alphabetic }} = new Chart(chart_{{ server | alphabetic }}_canvas, {
+                                type: 'line',
+                                data: {
+                                    labels: data.map(function (entry) {
+                                        return entry[0];
+                                    }),
+                                    datasets: [{
+                                        label: 'players',
+                                        data: data.map(function (entry) {
+                                            return entry[1];
+                                        }),
+                                        fill: true,
+                                        borderColor: getServerColor({{ server | tojson }}),
+                                        tension: 0.1,
+                                    }]
+                                },
+                                options: {
+                                    responsive: false,
+                                    maintainAspectRatio: false,
+                                },
+                            });
 
-                }).catch(function (err) {
+                        }).catch(function (err) {
                     console.warn('error while fetching data for {{ server }}', err);
                 });
 

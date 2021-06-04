@@ -7,13 +7,13 @@ from typing import Optional, List, Tuple, Dict
 
 def cursor_servers(con):
     cur = con.cursor()
-    cur.execute('SELECT address, ping FROM servers order by address')
+    cur.execute('SELECT address FROM servers order by address')
     return cur
 
 
-def cursor_servers_names(con):
+def cursor_players(con: Connection):
     cur = con.cursor()
-    cur.execute('SELECT address FROM servers order by address')
+    cur.execute('SELECT address, players FROM (SELECT * FROM players ORDER BY time DESC) GROUP BY address')
     return cur
 
 
@@ -32,12 +32,6 @@ def cursor_logos(con):
 def cursor_server_players(con: Connection, address: str, entries: int):
     cur = con.cursor()
     cur.execute('SELECT time, players FROM players WHERE address = (?) ORDER BY time DESC LIMIT (?)', [address, entries])
-    return cur
-
-
-def cursor_latest_players(con: Connection):
-    cur = con.cursor()
-    cur.execute('SELECT players FROM (SELECT * FROM players ORDER BY time DESC) GROUP BY address')
     return cur
 
 
@@ -70,13 +64,16 @@ class DB:
             )
             con.commit()
 
-    def get_servers_names(self) -> List[str]:
+    def get_servers(self) -> List[str]:
         with sqlite3.connect(self.__db_file) as con:
-            return [i[0] for i in cursor_servers_names(con).fetchall()]
+            return [i[0] for i in cursor_servers(con).fetchall()]
 
-    def get_latest_players(self) -> List[Optional[int]]:
+    def get_players(self) -> Dict[str, Optional[int]]:
         with sqlite3.connect(self.__db_file) as con:
-            return [i[0] for i in cursor_latest_players(con).fetchall()]
+            players = {}
+            for entry in cursor_players(con).fetchall():
+                players[entry[0]] = entry[1]
+            return players
 
     def get_pings(self) -> Dict[str, Optional[int]]:
         with sqlite3.connect(self.__db_file) as con:

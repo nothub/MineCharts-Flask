@@ -19,6 +19,7 @@ import db
 import gobbler
 from parser_types import non_empty_string_type, positive_int_type, network_port_type
 
+# set this True for debugging!
 DEBUG = True
 
 GENERIC_ERRORS = [
@@ -72,19 +73,19 @@ def index():
     return render_template(
         'index.html',
         title='Index',
-        servers=(db.get_servers_names()),
+        servers=(db.get_servers()),
     )
 
 
-@app.route('/servers', methods=['GET'])
-def api_servers():
-    return jsonify(db.get_servers_names())
+# @app.route('/servers', methods=['GET'])
+# def api_servers():
+#     return jsonify(db.get_servers())
 
 
 @app.route('/players', methods=['GET'])
 @limiter.limit('1/second,20/minute')
 def api_players():
-    return jsonify(db.get_latest_players())
+    return jsonify(db.get_players())
 
 
 @app.route('/pings', methods=['GET'])
