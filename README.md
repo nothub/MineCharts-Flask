@@ -18,4 +18,5 @@ placeholder
 [Flask-Minify](https://github.com/mrf345/flask_minify/),
 [requests](https://docs.python-requests.org/en/master/index.html),
 [gunicorn](https://gunicorn.org/),
+[Chart.js](https://www.chartjs.org/),
 [Solarized Dark](https://ethanschoonover.com/solarized/)
