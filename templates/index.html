@@ -23,11 +23,12 @@
                 {% endif %}
             </div>
             <div>
-                <canvas id="chart_{{ server | alphabetic }}" width="850"></canvas>
+                <canvas id="chart_{{ server | alphabetic }}" width="800"></canvas>
             </div>
         </div>
         <br>
     {% endfor %}
+    <button onclick="scroll_top()" class="box" id="button_scroll_top" title="top">top</button>
 {% endblock %}
 {% block js_body %}
     <script>
@@ -42,6 +43,19 @@
             const color = Math.floor(Math.abs((Math.sin(seed) * 10000) % 1 * 16777216)).toString(16)
             return '#' + Array(6 - color.length + 1).join('0') + color
         }
+
+        function scroll_top() {
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        }
+
+        window.onscroll = function () {
+            if (document.documentElement.scrollTop >= 10 || document.body.scrollTop >= 10) {
+                document.getElementById("button_scroll_top").style.display = "block";
+            } else {
+                document.getElementById("button_scroll_top").style.display = "none";
+            }
+        };
 
         window.onload = function () {
 
