@@ -12,6 +12,7 @@ from flask import Flask, jsonify, request, render_template
 from flask_limiter import Limiter
 from flask_minify import minify
 from requests import get
+# noinspection PyPackageRequirements
 from werkzeug.exceptions import HTTPException
 
 import db
