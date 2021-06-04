@@ -74,6 +74,10 @@ a:hover {
     overflow: hidden;
 }
 
+#chart_overview {
+    overflow: hidden;
+}
+
 #button_scroll_top {
     display: none;
     color: #839496;
