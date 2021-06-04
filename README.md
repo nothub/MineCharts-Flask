@@ -15,6 +15,6 @@ placeholder
 [mcstatus](https://github.com/Dinnerbone/mcstatus),
 [Flask](https://flask.palletsprojects.com/),
 [Flask-Limiter](https://flask-limiter.readthedocs.io/),
-[gunicorn](https://gunicorn.org/),
 [requests](https://docs.python-requests.org/en/master/index.html),
+[gunicorn](https://gunicorn.org/),
 [Solarized Dark](https://ethanschoonover.com/solarized/)
