@@ -60,6 +60,19 @@
             }
         };
 
+        function setPing(id_part, ping) {
+            const ping_old = document.getElementById('ping_' + id_part);
+            const ping_new = document.createElement('h3');
+            if (ping === undefined || ping === null) {
+                ping_new.textContent = 'DOWN';
+                ping_new.setAttribute('style', 'color: #DC322F');
+            } else {
+                ping_new.textContent = ping + " ms";
+            }
+            ping_new.setAttribute('id', 'ping_' + id_part);
+            ping_old.parentNode.replaceChild(ping_new, ping_old)
+        }
+
         let server_colors = [];
         {% for server in servers %}
             server_colors.push(getServerColor({{ server | tojson }}))
@@ -117,26 +130,10 @@
                     })
                     .then(data => obj = data)
                     .then(() => {
-
                         console.log(obj)
-
                         {%  for server in servers %}
-
-                            const ping_{{ server | alphabetic }}_old = document.getElementById('ping_{{ server | alphabetic }}');
-                            const ping_{{ server | alphabetic }}_new = document.createElement('h3');
-                            if (obj[{{ server | tojson }}] === undefined || obj[{{ server | tojson }}] === null) {
-                                ping_{{ server | alphabetic }}_new.textContent = 'DOWN';
-                                ping_{{ server | alphabetic }}_new.setAttribute('style', 'color: #DC322F');
-                            } else {
-                                ping_{{ server | alphabetic }}_new.textContent = obj[{{ server | tojson }}] + " ms";
-                            }
-                            ping_{{ server | alphabetic }}_new.setAttribute('id', 'ping_{{ server | alphabetic }}');
-                            ping_{{ server | alphabetic }}_old.parentNode
-                                    .replaceChild(ping_{{ server | alphabetic }}_new, ping_{{ server | alphabetic }}_old)
-
+                            setPing({{ server | alphabetic | tojson }}, obj[{{ server | tojson }}])
                         {% endfor %}
-
-
                     })
                     .catch(function (err) {
                         console.warn('error while fetching ping data', err);
