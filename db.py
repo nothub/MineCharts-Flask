@@ -13,19 +13,19 @@ def cursor_servers(con):
 
 def cursor_server_data(address: str, con: Connection, entries: int):
     cur = con.cursor()
-    cur.execute('SELECT time, players, ping FROM data WHERE address = (?) ORDER BY time DESC LIMIT (?)', [address, entries])
+    cur.execute('SELECT time, players FROM players WHERE address = (?) ORDER BY time DESC LIMIT (?)', [address, entries])
     return cur
 
 
 def cursor_latest_players(con: Connection):
     cur = con.cursor()
-    cur.execute('SELECT players FROM (SELECT * FROM data ORDER BY time DESC) GROUP BY address')
+    cur.execute('SELECT players FROM (SELECT * FROM players ORDER BY time DESC) GROUP BY address')
     return cur
 
 
-def cursor_latest_ping(con: Connection):
+def cursor_ping(con: Connection):
     cur = con.cursor()
-    cur.execute('SELECT ping FROM (SELECT * FROM data ORDER BY time DESC) GROUP BY address')
+    cur.execute('SELECT ping FROM servers ORDER BY address')
     return cur
 
 
@@ -40,14 +40,21 @@ class DB:
             cur = con.cursor()
             cur.execute(
                 ''' CREATE TABLE IF NOT EXISTS servers
-                (address TEXT NOT NULL UNIQUE PRIMARY KEY)'''
+                (address TEXT NOT NULL UNIQUE PRIMARY KEY,
+                ping INTEGER,
+                logo TEXT)'''
             )
             cur.execute(
-                ''' CREATE TABLE IF NOT EXISTS data
+                ''' CREATE TABLE IF NOT EXISTS players
                 (address TEXT NOT NULL REFERENCES servers(address),
                 time INTEGER NOT NULL,
-                players INTEGER,
-                ping INTEGER)'''
+                players INTEGER)'''
+            )
+            cur.execute(
+                ''' CREATE TABLE IF NOT EXISTS top
+                (address TEXT NOT NULL UNIQUE REFERENCES servers(address),
+                time INTEGER NOT NULL,
+                players INTEGER)'''
             )
             con.commit()
 
@@ -65,15 +72,15 @@ class DB:
 
     def get_latest_ping(self) -> List[Optional[int]]:
         with sqlite3.connect(self.__db_file) as con:
-            return [i[0] for i in cursor_latest_ping(con).fetchall()]
+            return [i[0] for i in cursor_ping(con).fetchall()]
 
-    def write_data(self, address: str, players: Optional[int], ping: Optional[int]):
+    def write_data(self, address: str, players: Optional[int], ping: Optional[int], logo: Optional[str]):
         with sqlite3.connect(self.__db_file) as con:
             cur = con.cursor()
-            cur.execute('INSERT OR IGNORE INTO servers VALUES (?)', [address])
-            cur.execute('INSERT INTO data VALUES (?,?,?,?)', (address, int(time.time()), players, ping))
-            cur.execute('SELECT COUNT(*) FROM data WHERE address = (?)', [address])
+            cur.execute('REPLACE INTO servers VALUES (?,?,?)', (address, ping, logo))
+            cur.execute('INSERT INTO players VALUES (?,?,?)', (address, int(time.time()), players))
+            cur.execute('SELECT COUNT(*) FROM players WHERE address = (?)', [address])
             if int(cur.fetchone()[0]) > self.__max_entries:
                 log.debug('removing oldest 100 entries for ' + address)
-                cur.execute('''DELETE FROM data WHERE address = (?) ORDER BY time ASC LIMIT 100''', [address])
+                cur.execute('''DELETE FROM players WHERE address = (?) ORDER BY time ASC LIMIT 100''', [address])
             con.commit()

@@ -8,15 +8,19 @@ from mcstatus import MinecraftServer
 import db
 
 
-def poll_server(address: str) -> Tuple[str, Optional[int], Optional[int]]:
+def poll_server(address: str) -> Tuple[str, Optional[int], Optional[int], Optional[str]]:
+    """
+    Poll server and return a Tuple:
+    address, players, ping, logo
+    """
     log.debug('fetching data for: ' + address)
     try:
         # TODO: allow non standard ports
         status = MinecraftServer.lookup(address).status()
     except (IOError, ValueError):
         log.debug('error while fetching data for: ' + address)
-        return address, None, None
-    return address, status.players.online, round(status.latency)
+        return address, None, None, None
+    return address, status.players.online, round(status.latency), status.favicon if status.favicon else None
 
 
 class Gobbler:
@@ -36,8 +40,8 @@ class Gobbler:
             time_start = time.time()
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 for result in executor.map(poll_server, self.__servers):
-                    address, players, ping = result
-                    self.__db.write_data(address, players, ping)
+                    address, players, ping, logo = result
+                    self.__db.write_data(address, players, ping, logo)
                 executor.shutdown(wait=True)
             log.debug('saved to db')
             time_total = time.time() - time_start
