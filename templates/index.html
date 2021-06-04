@@ -223,6 +223,29 @@
                 });
 
             {% endfor %}
+
+            setInterval(function () {
+
+                fetch('./pings')
+                        .then(function (response) {
+                            if (response.ok) {
+                                return response.json();
+                            } else {
+                                return Promise.reject(response);
+                            }
+                        })
+                        .then(data => obj = data)
+                        .then(() => {
+                            {%  for server in servers %}
+                                setPing({{ server | alphabetic | tojson }}, obj[{{ server | tojson }}])
+                            {% endfor %}
+                        })
+                        .catch(function (err) {
+                            console.warn('error while fetching ping data', err);
+                        });
+
+            }, 15000);
+
         }
 
     </script>

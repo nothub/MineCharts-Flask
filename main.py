@@ -83,19 +83,19 @@ def index():
 
 
 @app.route('/players', methods=['GET'])
-@limiter.limit('1/second,20/minute')
+@limiter.limit('4/second')
 def api_players():
     return jsonify(db.get_players())
 
 
 @app.route('/pings', methods=['GET'])
-@limiter.limit('1/second,20/minute')
+@limiter.limit('4/second')
 def api_ping():
     return jsonify(db.get_pings())
 
 
 @app.route('/logos', methods=['GET'])
-@limiter.limit('1/second,20/minute')
+@limiter.limit('1/second')
 def get_server_logo():
     return jsonify(db.get_logos())
 
