@@ -44,7 +44,7 @@ def get_ip_proxied():
 
 
 def alphabetic(s: str) -> str:
-    return re.sub(r"[^A-Za-z0-9]", "", s)
+    return re.sub(r"[^A-Za-z0-9_]", "_", s)
 
 
 app.add_template_filter(alphabetic)
