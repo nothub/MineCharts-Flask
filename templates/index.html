@@ -18,8 +18,7 @@
                 {% if data[server][0][1] == None or data[server][0][2] == None %}
                     <h3 style="color: #DC322F">DOWN</h3>
                 {% else %}
-                    <p>user: {{ data[server][0][1] }}</p>
-                    <p>ping: {{ data[server][0][2] }} ms</p>
+                    <p>{{ data[server][0][1] }} @ {{ data[server][0][2] }} ms</p>
                 {% endif %}
             </div>
             <div>
