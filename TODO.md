@@ -8,6 +8,12 @@
 
 ---
 
+### db
+
+- auto delete server records older then 1 month?
+
+---
+
 ### server charts
 
 - dates as human readable
