@@ -55,6 +55,25 @@ a:hover {
     z-index: 98;
 }
 
+.wrapper {
+    overflow: hidden;
+}
+
+.info {
+    text-align: left;
+    float: left;
+    margin-top: 0;
+    margin-left: 5px;
+    line-height: 2px;
+}
+
+.logo {
+    text-align: right;
+    float: right;
+    margin: 5px;
+    overflow: hidden;
+}
+
 #button_scroll_top {
     display: none;
     color: #839496;

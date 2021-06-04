@@ -24,9 +24,13 @@
 
     {% for server in servers %}
         <div class="box" id="{{ server }}" style="width: 850px">
-            <div id="logo_{{ server | alphabetic }}"></div>
-            <h2>{{ server }}</h2>
-            <h3 style="color: #DC322F" id="ping_{{ server | alphabetic }}">DOWN</h3>
+            <div class="wrapper">
+                <div class="logo" id="logo_{{ server | alphabetic }}"></div>
+                <div class="info">
+                    <h2>{{ server }}</h2>
+                    <h3 style="color: #DC322F" id="ping_{{ server | alphabetic }}">DOWN</h3>
+                </div>
+            </div>
             <div>
                 <canvas id="chart_{{ server | alphabetic }}" width="800"></canvas>
             </div>
