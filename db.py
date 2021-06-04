@@ -32,12 +32,10 @@ def cursor_latest_ping(con: Connection):
 class DB:
     __db_file: str
     __max_entries: int
-    __auto_clean: bool
 
-    def __init__(self, db_file: str = 'db.sqlite', max_entries: int = 10000, auto_clean: bool = True):
+    def __init__(self, db_file: str = 'db.sqlite', max_entries: int = 2419200):
         self.__db_file = db_file
         self.__max_entries = max_entries
-        self.__auto_clean = auto_clean
         with sqlite3.connect(self.__db_file) as con:
             cur = con.cursor()
             cur.execute(
@@ -75,7 +73,7 @@ class DB:
             cur.execute('INSERT OR IGNORE INTO servers VALUES (?)', [address])
             cur.execute('INSERT INTO data VALUES (?,?,?,?)', (address, int(time.time()), players, ping))
             cur.execute('SELECT COUNT(*) FROM data WHERE address = (?)', [address])
-            if self.__auto_clean and int(cur.fetchone()[0]) > self.__max_entries:
+            if int(cur.fetchone()[0]) > self.__max_entries:
                 log.debug('removing oldest 100 entries for ' + address)
                 cur.execute('''DELETE FROM data WHERE address = (?) ORDER BY time ASC LIMIT 100''', [address])
             con.commit()
