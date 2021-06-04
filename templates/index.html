@@ -79,8 +79,6 @@
                 }
             }).then(function (data) {
 
-                // overview chart
-
                 let chart_overview_canvas = document.getElementById('chart_overview');
                 const chart_overview = new Chart(chart_overview_canvas, {
                     type: 'doughnut',
@@ -111,9 +109,7 @@
                 console.warn('error while fetching player data', err);
             });
 
-            // server pings
-
-            const pings = new Map()
+            let pings = new Map()
             fetch('./pings')
                     .then(function (response) {
                         if (response.ok) {
@@ -132,11 +128,8 @@
                         console.warn('error while fetching ping data', err);
                     });
 
-            // server logos
-
-            const logos = new Map();
             fetch('./logos')
-                    .then(function (response) {
+                    .then(function await(response) {
                         if (response.ok) {
                             return response.json();
                         } else {
@@ -145,35 +138,23 @@
                     })
                     .then(data => obj = data)
                     .then(() => {
-                        for (let key in obj) {
-                            logos[key] = obj[key]
-                        }
+                        {%  for server in servers %}
+                            if (obj[{{ server | tojson }}] !== null) {
+                                const logo_{{ server | alphabetic }}_div = document.getElementById('logo_{{ server | alphabetic }}');
+                                logo_{{ server | alphabetic }}_div.height = 64;
+                                const logo_{{ server | alphabetic }}_img = document.createElement("img");
+                                logo_{{ server | alphabetic }}_img.setAttribute("src", obj[{{ server | tojson }}]);
+                                logo_{{ server | alphabetic }}_img.setAttribute("height", "48");
+                                logo_{{ server | alphabetic }}_img.setAttribute("width", "48");
+                                logo_{{ server | alphabetic }}_div.appendChild(logo_{{ server | alphabetic }}_img)
+                            }
+                        {% endfor %}
                     })
                     .catch(function (err) {
                         console.warn('error while fetching logo data', err);
                     });
 
-            console.log(logos)
-
             {% for server in servers %}
-
-                // set logo {{ server | alphabetic }}
-
-                if (logos.has({{ server | tojson }})) {
-
-                    let logo_{{ server | alphabetic }}_div = document.getElementById('logo_{{ server | alphabetic }}');
-                    logo_{{ server | alphabetic }}_div.height = 64;
-
-                    const elem = document.createElement("img");
-                    elem.setAttribute("src", logos[{{ server | tojson }}]);
-                    elem.setAttribute("height", "48");
-                    elem.setAttribute("width", "48");
-
-                    logo_{{ server | alphabetic }}_div.appendChild(elem)
-
-                }
-
-                // server chart {{ server | alphabetic }}
 
                 fetch('./players/{{ server }}').then(function (response) {
                     if (response.ok) {
