@@ -25,10 +25,8 @@
     {% for server in servers %}
         <div class="box" id="{{ server }}" style="width: 850px">
             <div id="logo_{{ server | alphabetic }}"></div>
-            <div>
-                <h2>{{ server }}</h2>
-                <h3 style="color: #DC322F">DOWN</h3>
-            </div>
+            <h2>{{ server }}</h2>
+            <h3 style="color: #DC322F" id="ping_{{ server | alphabetic }}">DOWN</h3>
             <div>
                 <canvas id="chart_{{ server | alphabetic }}" width="800"></canvas>
             </div>
@@ -109,7 +107,6 @@
                 console.warn('error while fetching player data', err);
             });
 
-            let pings = new Map()
             fetch('./pings')
                     .then(function (response) {
                         if (response.ok) {
@@ -120,9 +117,26 @@
                     })
                     .then(data => obj = data)
                     .then(() => {
-                        for (let key in obj) {
-                            pings[key] = obj[key]
-                        }
+
+                        console.log(obj)
+
+                        {%  for server in servers %}
+
+                            const ping_{{ server | alphabetic }}_old = document.getElementById('ping_{{ server | alphabetic }}');
+                            const ping_{{ server | alphabetic }}_new = document.createElement('h3');
+                            if (obj[{{ server | tojson }}] === undefined || obj[{{ server | tojson }}] === null) {
+                                ping_{{ server | alphabetic }}_new.textContent = 'DOWN';
+                                ping_{{ server | alphabetic }}_new.setAttribute('style', 'color: #DC322F');
+                            } else {
+                                ping_{{ server | alphabetic }}_new.textContent = obj[{{ server | tojson }}] + " ms";
+                            }
+                            ping_{{ server | alphabetic }}_new.setAttribute('id', 'ping_{{ server | alphabetic }}');
+                            ping_{{ server | alphabetic }}_old.parentNode
+                                    .replaceChild(ping_{{ server | alphabetic }}_new, ping_{{ server | alphabetic }}_old)
+
+                        {% endfor %}
+
+
                     })
                     .catch(function (err) {
                         console.warn('error while fetching ping data', err);

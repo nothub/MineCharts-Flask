@@ -89,7 +89,7 @@ def api_players():
 @app.route('/pings', methods=['GET'])
 @limiter.limit('1/second,20/minute')
 def api_ping():
-    return jsonify(db.get_latest_pings())
+    return jsonify(db.get_pings())
 
 
 @app.route('/logos', methods=['GET'])

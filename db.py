@@ -17,6 +17,12 @@ def cursor_servers_names(con):
     return cur
 
 
+def cursor_pings(con: Connection):
+    cur = con.cursor()
+    cur.execute('SELECT address, ping FROM servers ORDER BY address')
+    return cur
+
+
 def cursor_logos(con):
     cur = con.cursor()
     cur.execute('SELECT address, logo FROM servers order by address')
@@ -32,12 +38,6 @@ def cursor_server_players(con: Connection, address: str, entries: int):
 def cursor_latest_players(con: Connection):
     cur = con.cursor()
     cur.execute('SELECT players FROM (SELECT * FROM players ORDER BY time DESC) GROUP BY address')
-    return cur
-
-
-def cursor_latest_pings(con: Connection):
-    cur = con.cursor()
-    cur.execute('SELECT ping FROM servers ORDER BY address')
     return cur
 
 
@@ -78,9 +78,12 @@ class DB:
         with sqlite3.connect(self.__db_file) as con:
             return [i[0] for i in cursor_latest_players(con).fetchall()]
 
-    def get_latest_pings(self) -> List[Optional[int]]:
+    def get_pings(self) -> Dict[str, Optional[int]]:
         with sqlite3.connect(self.__db_file) as con:
-            return [i[0] for i in cursor_latest_pings(con).fetchall()]
+            pings = {}
+            for entry in cursor_pings(con).fetchall():
+                pings[entry[0]] = entry[1]
+            return pings
 
     def get_logos(self) -> Dict[str, Optional[str]]:
         with sqlite3.connect(self.__db_file) as con:
