@@ -17,3 +17,6 @@
 !/assets/**
 !/static/**
 !/templates/**
+
+# misc
+!/*.md
