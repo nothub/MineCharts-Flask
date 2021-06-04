@@ -6,7 +6,7 @@ placeholder
 
 ###### screenshot
 
-![screenshot](.github/screenshot.png)
+[![screenshot](.github/screenshot.png)](https://stats.neckbeard.cc/)
 
 ---
 
