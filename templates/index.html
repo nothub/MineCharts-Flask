@@ -9,9 +9,9 @@
 
 {% block body %}
 
-    <button onclick="scroll_top()" class="box" id="button_scroll_top" title="top">top</button>
+    <button onclick="scroll_top()" class="overlay" id="button_scroll_top" title="top" style="top: 10px; right: 10px">top</button>
 
-    <ul class="box" id="server_list" style="text-align: left">
+    <ul class="overlay" style="top: 10px; left: 10px">
         {% for server in servers %}
             <li style="margin: 0.4em"><a href="./#{{ server }}">{{ server }}</a></li>
         {% endfor %}
@@ -82,18 +82,16 @@
                     datasets: [{
                         label: 'players',
                         data: {{ players | tojson }},
+                        backgroundColor: server_colors,
+                        borderWidth: 0,
+                        hoverBorderWidth: 1,
+                        hoverBorderColor: '#002B36',
                         hoverOffset: -32,
-                        borderAlign: 'inner',
-                        borderWidth: 0.1,
-                        backgroundColor: server_colors
                     }]
                 },
                 options: {
-                    legend: {
-                        display: false
-                    },
                     responsive: true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false,
                 },
             });
 
@@ -125,15 +123,12 @@
                                 }),
                                 fill: true,
                                 borderColor: getServerColor({{ server | tojson }}),
-                                tension: 0.1
+                                tension: 0.1,
                             }]
                         },
                         options: {
-                            legend: {
-                                display: false
-                            },
                             responsive: false,
-                            maintainAspectRatio: false
+                            maintainAspectRatio: false,
                         },
                     });
                 }).catch(function (err) {
