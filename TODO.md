@@ -2,7 +2,6 @@
 
 ### api
 
-- endpoint for: latest ping, version and server logo dict (key address)
 - endpoint for: data of server at epoch
 - endpoint for: data of server before epoch
 - endpoint for: data of server after epoch
@@ -13,8 +12,6 @@
 
 - auto delete server records older-then 1 month
 - auto delete servers unreachable for a week
-- store server version
-- store server latest ping
 
 ---
 
@@ -28,7 +25,7 @@
 
 ### history page per server
 
-- daily / weekly / yearly?
+- daily / weekly / monthly
 - select date
 - backward / forward
 
