@@ -63,14 +63,26 @@
         function setPing(id_part, ping) {
             const ping_old = document.getElementById('ping_' + id_part);
             const ping_new = document.createElement('h3');
-            if (ping === undefined || ping === null) {
+            if (ping !== undefined && ping !== null) {
+                ping_new.textContent = ping + " ms";
+            } else {
                 ping_new.textContent = 'DOWN';
                 ping_new.setAttribute('style', 'color: #DC322F');
-            } else {
-                ping_new.textContent = ping + " ms";
             }
             ping_new.setAttribute('id', 'ping_' + id_part);
             ping_old.parentNode.replaceChild(ping_new, ping_old)
+        }
+
+        function setLogo(id_part, logo) {
+            if (logo !== undefined && logo !== null) {
+                const logo_div = document.getElementById('logo_' + id_part);
+                logo_div.height = 48;
+                const logo_img = document.createElement("img");
+                logo_img.setAttribute("src", logo);
+                logo_img.setAttribute("height", "48");
+                logo_img.setAttribute("width", "48");
+                logo_div.appendChild(logo_img)
+            }
         }
 
         let server_colors = [];
@@ -150,15 +162,7 @@
                     .then(data => obj = data)
                     .then(() => {
                         {%  for server in servers %}
-                            if (obj[{{ server | tojson }}] !== null) {
-                                const logo_{{ server | alphabetic }}_div = document.getElementById('logo_{{ server | alphabetic }}');
-                                logo_{{ server | alphabetic }}_div.height = 64;
-                                const logo_{{ server | alphabetic }}_img = document.createElement("img");
-                                logo_{{ server | alphabetic }}_img.setAttribute("src", obj[{{ server | tojson }}]);
-                                logo_{{ server | alphabetic }}_img.setAttribute("height", "48");
-                                logo_{{ server | alphabetic }}_img.setAttribute("width", "48");
-                                logo_{{ server | alphabetic }}_div.appendChild(logo_{{ server | alphabetic }}_img)
-                            }
+                            setLogo({{ server | alphabetic | tojson }}, obj[{{ server | tojson }}])
                         {% endfor %}
                     })
                     .catch(function (err) {
