@@ -10,6 +10,7 @@ from typing import List, Dict, Tuple, Optional
 
 from flask import Flask, jsonify, request, render_template
 from flask_limiter import Limiter
+from flask_minify import minify
 from requests import get
 from werkzeug.exceptions import HTTPException
 
@@ -30,6 +31,7 @@ GENERIC_ERRORS = [
 log.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log.INFO)
 
 app = Flask(__name__)
+minify(app=app, html=True, js=True, cssless=True)
 
 db = db.DB()
 
