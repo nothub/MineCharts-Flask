@@ -6,7 +6,7 @@ import re
 import subprocess as sp
 import sys
 from threading import *
-from typing import List, Dict, Tuple, Optional
+from typing import List
 
 from flask import Flask, jsonify, request, render_template
 from flask_limiter import Limiter
@@ -18,6 +18,8 @@ import db
 import gobbler
 from parser_types import non_empty_string_type, positive_int_type, network_port_type
 
+DEBUG = True
+
 GENERIC_ERRORS = [
     'Oops! Something went wrong.',
     'Google Chrome quit unexpectedly.',
@@ -28,10 +30,16 @@ GENERIC_ERRORS = [
     ':(){ :|:& };:',
 ]
 
-log.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log.INFO)
+log.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log.DEBUG if DEBUG else log.INFO)
 
 app = Flask(__name__)
-minify(app=app, html=True, js=True, cssless=True)
+
+if DEBUG:
+    app.config['ENV'] = 'development'
+    app.config['DEBUG'] = True
+    app.config['TESTING'] = True
+else:
+    minify(app=app, html=True, js=True, cssless=True)
 
 db = db.DB()
 
@@ -63,15 +71,13 @@ def index():
     return render_template(
         'index.html',
         title='Index',
-        servers=(db.get_servers()),
-        players=(db.get_latest_players()),
-        data=data_snapshot(1),
+        servers=(db.get_servers_names()),
     )
 
 
 @app.route('/servers', methods=['GET'])
 def api_servers():
-    return jsonify(db.get_servers())
+    return jsonify(db.get_servers_names())
 
 
 @app.route('/players', methods=['GET'])
@@ -80,16 +86,22 @@ def api_players():
     return jsonify(db.get_latest_players())
 
 
-@app.route('/ping', methods=['GET'])
+@app.route('/pings', methods=['GET'])
 @limiter.limit('1/second,20/minute')
 def api_ping():
-    return jsonify(db.get_latest_ping())
+    return jsonify(db.get_latest_pings())
 
 
-@app.route('/servers/<address>', methods=['GET'])
+@app.route('/players/<address>', methods=['GET'])
 @limiter.limit('100/second')
-def api_servers_data(address):
-    return jsonify(db.get_data(address))
+def api_players_server(address):
+    return jsonify(db.get_server_players(address))
+
+
+@app.route('/logo/<address>', methods=['GET'])
+@limiter.limit('100/second')
+def get_server_logo(address):
+    return jsonify(db.get_server_logo(address))
 
 
 @app.errorhandler(Exception)
@@ -99,13 +111,6 @@ def error_handler(exception: Exception):
     if isinstance(exception, HTTPException) and exception.code < 500:
         code = exception.code
     return render_template('error.html', code=str(code), text=random.choice(GENERIC_ERRORS))
-
-
-def data_snapshot(entries: int) -> Dict[str, List[Tuple[int, Optional[int], Optional[int]]]]:
-    snapshot = dict()
-    for server in db.get_servers():
-        snapshot[server] = db.get_data(server, entries)
-    return snapshot
 
 
 def parse_args() -> argparse.Namespace:

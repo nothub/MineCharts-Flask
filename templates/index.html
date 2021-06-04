@@ -26,11 +26,7 @@
         <div class="box" id="{{ server }}" style="width: 850px">
             <div>
                 <h2>{{ server }}</h2>
-                {% if data[server][0][1] == None or data[server][0][2] == None %}
-                    <h3 style="color: #DC322F">DOWN</h3>
-                {% else %}
-                    <p>{{ data[server][0][1] }} @ {{ data[server][0][2] }} ms</p>
-                {% endif %}
+                <h3 style="color: #DC322F">DOWN</h3>
             </div>
             <div>
                 <canvas id="chart_{{ server | alphabetic }}" width="800"></canvas>
@@ -74,40 +70,54 @@
 
             Chart.defaults.plugins.legend = false
 
-            let chart_overview_canvas = document.getElementById('chart_overview');
-            const chart_overview = new Chart(chart_overview_canvas, {
-                type: 'doughnut',
-                data: {
-                    labels: {{ servers | tojson }},
-                    datasets: [{
-                        label: 'players',
-                        data: {{ players | tojson }},
-                        backgroundColor: server_colors,
-                        borderWidth: 0,
-                        hoverBorderWidth: 1,
-                        hoverBorderColor: '#002B36',
-                        hoverOffset: -32,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                },
+            fetch('./players').then(function (response) {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    return Promise.reject(response);
+                }
+            }).then(function (data) {
+
+                let chart_overview_canvas = document.getElementById('chart_overview');
+                const chart_overview = new Chart(chart_overview_canvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: {{ servers | tojson }},
+                        datasets: [{
+                            label: 'players',
+                            data: data,
+                            backgroundColor: server_colors,
+                            borderWidth: 0,
+                            hoverBorderWidth: 1,
+                            hoverBorderColor: '#002B36',
+                            hoverOffset: -32,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                    },
+                });
+
+                chart_overview_canvas.onclick = function (e) {
+                    const points = chart_overview.getElementsAtEventForMode(e, 'nearest', {intersect: true}, true);
+                    if (points.length) document.getElementById(chart_overview.data.labels[points[0].index]).scrollIntoView();
+                }
+
+            }).catch(function (err) {
+                console.warn('error while fetching player data', err);
             });
 
-            chart_overview_canvas.onclick = function (e) {
-                const points = chart_overview.getElementsAtEventForMode(e, 'nearest', {intersect: true}, true);
-                if (points.length) document.getElementById(chart_overview.data.labels[points[0].index]).scrollIntoView();
-            }
-
             {% for server in servers %}
-                fetch('./servers/{{ server }}').then(function (response) {
+
+                fetch('./players/{{ server }}').then(function (response) {
                     if (response.ok) {
                         return response.json();
                     } else {
                         return Promise.reject(response);
                     }
                 }).then(function (data) {
+
                     let chart_{{ server | alphabetic }}_canvas = document.getElementById('chart_{{ server | alphabetic }}');
                     chart_{{ server | alphabetic }}_canvas.height = 300;
                     const chart_{{ server | alphabetic }} = new Chart(chart_{{ server | alphabetic }}_canvas, {
@@ -131,9 +141,11 @@
                             maintainAspectRatio: false,
                         },
                     });
+
                 }).catch(function (err) {
                     console.warn('error while fetching data for {{ server }}', err);
                 });
+
             {% endfor %}
         }
 

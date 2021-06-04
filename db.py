@@ -7,13 +7,25 @@ from typing import Optional, List, Tuple
 
 def cursor_servers(con):
     cur = con.cursor()
+    cur.execute('SELECT address, ping FROM servers order by address')
+    return cur
+
+
+def cursor_servers_names(con):
+    cur = con.cursor()
     cur.execute('SELECT address FROM servers order by address')
     return cur
 
 
-def cursor_server_data(address: str, con: Connection, entries: int):
+def cursor_server_players(con: Connection, address: str, entries: int):
     cur = con.cursor()
     cur.execute('SELECT time, players FROM players WHERE address = (?) ORDER BY time DESC LIMIT (?)', [address, entries])
+    return cur
+
+
+def cursor_server_logo(con, address: str):
+    cur = con.cursor()
+    cur.execute('SELECT address, logo FROM servers WHERE address = (?)', ([address]))
     return cur
 
 
@@ -23,7 +35,7 @@ def cursor_latest_players(con: Connection):
     return cur
 
 
-def cursor_ping(con: Connection):
+def cursor_latest_pings(con: Connection):
     cur = con.cursor()
     cur.execute('SELECT ping FROM servers ORDER BY address')
     return cur
@@ -58,21 +70,25 @@ class DB:
             )
             con.commit()
 
-    def get_servers(self) -> List[str]:
+    def get_servers_names(self) -> List[str]:
         with sqlite3.connect(self.__db_file) as con:
-            return [i[0] for i in cursor_servers(con).fetchall()]
-
-    def get_data(self, address: str, entries: int = 240) -> List[Tuple[int, Optional[int], Optional[int]]]:
-        with sqlite3.connect(self.__db_file) as con:
-            return cursor_server_data(address, con, entries).fetchall()
+            return [i[0] for i in cursor_servers_names(con).fetchall()]
 
     def get_latest_players(self) -> List[Optional[int]]:
         with sqlite3.connect(self.__db_file) as con:
             return [i[0] for i in cursor_latest_players(con).fetchall()]
 
-    def get_latest_ping(self) -> List[Optional[int]]:
+    def get_latest_pings(self) -> List[Optional[int]]:
         with sqlite3.connect(self.__db_file) as con:
-            return [i[0] for i in cursor_ping(con).fetchall()]
+            return [i[0] for i in cursor_latest_pings(con).fetchall()]
+
+    def get_server_players(self, address: str, entries: int = 240) -> List[Tuple[int, Optional[int]]]:
+        with sqlite3.connect(self.__db_file) as con:
+            return cursor_server_players(con, address, entries).fetchall()
+
+    def get_server_logo(self, address: str) -> List[Tuple[str, Optional[int]]]:
+        with sqlite3.connect(self.__db_file) as con:
+            return cursor_server_logo(con, address).fetchall()
 
     def write_data(self, address: str, players: Optional[int], ping: Optional[int], logo: Optional[str]):
         with sqlite3.connect(self.__db_file) as con:
