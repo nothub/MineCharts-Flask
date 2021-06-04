@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block body %}
+
+    <button onclick="scroll_top()" class="box" id="button_scroll_top" title="top">top</button>
+
+    <ul class="box" id="server_list" style="text-align: left">
+        {% for server in servers %}
+            <li style="margin: 0.4em"><a href="./#{{ server }}">{{ server }}</a></li>
+        {% endfor %}
+    </ul>
+
+    <div style="height: 400px">
+        <canvas id="chart_overview"></canvas>
+    </div>
+    <br>
+
+    {% for server in servers %}
+        <div class="box" id="{{ server }}" style="width: 850px">
+            <div>
+                <h2>{{ server }}</h2>
+                {% if data[server][0][1] == None or data[server][0][2] == None %}
+                    <h3 style="color: #DC322F">DOWN</h3>
+                {% else %}
+                    <p>{{ data[server][0][1] }} @ {{ data[server][0][2] }} ms</p>
+                {% endif %}
+            </div>
+            <div>
+                <canvas id="chart_{{ server | alphabetic }}" width="800"></canvas>
+            </div>
+        </div>
+        <br>
+    {% endfor %}
+
+    <script>
+
+        function getServerColor(address) {
+            // minetracks color scheme:
+            // https://github.com/Cryptkeeper/Minetrack/blob/af2301495ec015efdbc994391c0732db2d5df19c/main.js#L15
+            let seed = 0
+            for (let i = address.length - 1; i >= 0; i--) {
+                seed = address.charCodeAt(i) + ((seed << 5) - seed)
+            }
+            const color = Math.floor(Math.abs((Math.sin(seed) * 10000) % 1 * 16777216)).toString(16)
+            return '#' + Array(6 - color.length + 1).join('0') + color
+        }
+
+        function scroll_top() {
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        }
+
+        window.onscroll = function () {
+            if (document.documentElement.scrollTop >= 10 || document.body.scrollTop >= 10) {
+                document.getElementById("button_scroll_top").style.display = "block";
+            } else {
+                document.getElementById("button_scroll_top").style.display = "none";
+            }
+        };
+
+        let server_colors = [];
+        {% for server in servers %}
+            server_colors.push(getServerColor({{ server | tojson }}))
+        {% endfor %}
+
+        window.onload = function () {
+
+            Chart.defaults.plugins.legend = false
+
+            let chart_overview_canvas = document.getElementById('chart_overview');
+            const chart_overview = new Chart(chart_overview_canvas, {
+                type: 'doughnut',
+                data: {
+                    labels: {{ servers | tojson }},
+                    datasets: [{
+                        label: 'player',
+                        data: {{ players | tojson }},
+                        hoverOffset: -32,
+                        backgroundColor: server_colors
+                    }]
+                },
+                options: {
+                    legend: {
+                        display: false
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                },
+            });
+
+            chart_overview_canvas.onclick = function (e) {
+                const points = chart_overview.getElementsAtEventForMode(e, 'nearest', {intersect: true}, true);
+                if (points.length) document.getElementById(chart_overview.data.labels[points[0].index]).scrollIntoView();
+            }
+
+            {% for server in servers %}
+                fetch('./servers/{{ server }}').then(function (response) {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return Promise.reject(response);
+                    }
+                }).then(function (data) {
+                    const chart_{{ server | alphabetic }} = new Chart(document.getElementById('chart_{{ server | alphabetic }}'), {
+                        type: 'line',
+                        data: {
+                            labels: data.map(function (entry) {
+                                return entry[0];
+                            }),
+                            datasets: [{
+                                label: 'player',
+                                data: data.map(function (entry) {
+                                    return entry[1];
+                                }),
+                                fill: false,
+                                borderColor: '#2AA198',
+                                tension: 0.1
+                            }, {
+                                label: 'ping',
+                                data: data.map(function (entry) {
+                                    return entry[2];
+                                }),
+                                fill: false,
+                                borderColor: '#268BD2',
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            legend: {
+                                display: false
+                            },
+                            responsive: false,
+                            maintainAspectRatio: false
+                        },
+                    });
+                }).catch(function (err) {
+                    console.warn('error while fetching data for {{ server }}', err);
+                });
+            {% endfor %}
+        }
+
+    </script>
+
+{% endblock %}
