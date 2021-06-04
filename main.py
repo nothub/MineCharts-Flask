@@ -92,16 +92,16 @@ def api_ping():
     return jsonify(db.get_latest_pings())
 
 
+@app.route('/logos', methods=['GET'])
+@limiter.limit('1/second,20/minute')
+def get_server_logo():
+    return jsonify(db.get_logos())
+
+
 @app.route('/players/<address>', methods=['GET'])
 @limiter.limit('100/second')
 def api_players_server(address):
     return jsonify(db.get_server_players(address))
-
-
-@app.route('/logo/<address>', methods=['GET'])
-@limiter.limit('100/second')
-def get_server_logo(address):
-    return jsonify(db.get_server_logo(address))
 
 
 @app.errorhandler(Exception)

@@ -24,6 +24,7 @@
 
     {% for server in servers %}
         <div class="box" id="{{ server }}" style="width: 850px">
+            <div id="logo_{{ server | alphabetic }}"></div>
             <div>
                 <h2>{{ server }}</h2>
                 <h3 style="color: #DC322F">DOWN</h3>
@@ -78,6 +79,8 @@
                 }
             }).then(function (data) {
 
+                // overview chart
+
                 let chart_overview_canvas = document.getElementById('chart_overview');
                 const chart_overview = new Chart(chart_overview_canvas, {
                     type: 'doughnut',
@@ -108,7 +111,69 @@
                 console.warn('error while fetching player data', err);
             });
 
+            // server pings
+
+            const pings = new Map()
+            fetch('./pings')
+                    .then(function (response) {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            return Promise.reject(response);
+                        }
+                    })
+                    .then(data => obj = data)
+                    .then(() => {
+                        for (let key in obj) {
+                            pings[key] = obj[key]
+                        }
+                    })
+                    .catch(function (err) {
+                        console.warn('error while fetching ping data', err);
+                    });
+
+            // server logos
+
+            const logos = new Map();
+            fetch('./logos')
+                    .then(function (response) {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            return Promise.reject(response);
+                        }
+                    })
+                    .then(data => obj = data)
+                    .then(() => {
+                        for (let key in obj) {
+                            logos[key] = obj[key]
+                        }
+                    })
+                    .catch(function (err) {
+                        console.warn('error while fetching logo data', err);
+                    });
+
+            console.log(logos)
+
             {% for server in servers %}
+
+                // set logo {{ server | alphabetic }}
+
+                if (logos.has({{ server | tojson }})) {
+
+                    let logo_{{ server | alphabetic }}_div = document.getElementById('logo_{{ server | alphabetic }}');
+                    logo_{{ server | alphabetic }}_div.height = 64;
+
+                    const elem = document.createElement("img");
+                    elem.setAttribute("src", logos[{{ server | tojson }}]);
+                    elem.setAttribute("height", "48");
+                    elem.setAttribute("width", "48");
+
+                    logo_{{ server | alphabetic }}_div.appendChild(elem)
+
+                }
+
+                // server chart {{ server | alphabetic }}
 
                 fetch('./players/{{ server }}').then(function (response) {
                     if (response.ok) {

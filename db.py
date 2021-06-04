@@ -2,7 +2,7 @@ import logging as log
 import sqlite3
 import time
 from sqlite3 import Connection
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict
 
 
 def cursor_servers(con):
@@ -17,15 +17,15 @@ def cursor_servers_names(con):
     return cur
 
 
-def cursor_server_players(con: Connection, address: str, entries: int):
+def cursor_logos(con):
     cur = con.cursor()
-    cur.execute('SELECT time, players FROM players WHERE address = (?) ORDER BY time DESC LIMIT (?)', [address, entries])
+    cur.execute('SELECT address, logo FROM servers order by address')
     return cur
 
 
-def cursor_server_logo(con, address: str):
+def cursor_server_players(con: Connection, address: str, entries: int):
     cur = con.cursor()
-    cur.execute('SELECT address, logo FROM servers WHERE address = (?)', ([address]))
+    cur.execute('SELECT time, players FROM players WHERE address = (?) ORDER BY time DESC LIMIT (?)', [address, entries])
     return cur
 
 
@@ -82,13 +82,16 @@ class DB:
         with sqlite3.connect(self.__db_file) as con:
             return [i[0] for i in cursor_latest_pings(con).fetchall()]
 
+    def get_logos(self) -> Dict[str, Optional[str]]:
+        with sqlite3.connect(self.__db_file) as con:
+            logos = {}
+            for entry in cursor_logos(con).fetchall():
+                logos[entry[0]] = entry[1]
+            return logos
+
     def get_server_players(self, address: str, entries: int = 240) -> List[Tuple[int, Optional[int]]]:
         with sqlite3.connect(self.__db_file) as con:
             return cursor_server_players(con, address, entries).fetchall()
-
-    def get_server_logo(self, address: str) -> List[Tuple[str, Optional[int]]]:
-        with sqlite3.connect(self.__db_file) as con:
-            return cursor_server_logo(con, address).fetchall()
 
     def write_data(self, address: str, players: Optional[int], ping: Optional[int], logo: Optional[str]):
         with sqlite3.connect(self.__db_file) as con:
