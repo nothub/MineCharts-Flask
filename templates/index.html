@@ -80,9 +80,11 @@
                 data: {
                     labels: {{ servers | tojson }},
                     datasets: [{
-                        label: 'player',
+                        label: 'players',
                         data: {{ players | tojson }},
                         hoverOffset: -32,
+                        borderAlign: 'inner',
+                        borderWidth: 0.1,
                         backgroundColor: server_colors
                     }]
                 },
@@ -108,27 +110,21 @@
                         return Promise.reject(response);
                     }
                 }).then(function (data) {
-                    const chart_{{ server | alphabetic }} = new Chart(document.getElementById('chart_{{ server | alphabetic }}'), {
+                    let chart_{{ server | alphabetic }}_canvas = document.getElementById('chart_{{ server | alphabetic }}');
+                    chart_{{ server | alphabetic }}_canvas.height = 300;
+                    const chart_{{ server | alphabetic }} = new Chart(chart_{{ server | alphabetic }}_canvas, {
                         type: 'line',
                         data: {
                             labels: data.map(function (entry) {
                                 return entry[0];
                             }),
                             datasets: [{
-                                label: 'player',
+                                label: 'players',
                                 data: data.map(function (entry) {
                                     return entry[1];
                                 }),
-                                fill: false,
-                                borderColor: '#2AA198',
-                                tension: 0.1
-                            }, {
-                                label: 'ping',
-                                data: data.map(function (entry) {
-                                    return entry[2];
-                                }),
-                                fill: false,
-                                borderColor: '#268BD2',
+                                fill: true,
+                                borderColor: getServerColor({{ server | tojson }}),
                                 tension: 0.1
                             }]
                         },
