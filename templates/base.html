@@ -7,11 +7,9 @@
         <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     {% endblock %}
-    {% block js_head %}{% endblock %}
 </head>
 <body>
-{% block js_body %}{% endblock %}
-{% block content %}{% endblock %}
+{% block body %}{% endblock %}
 <footer>foo bar</footer>
 </body>
 </html>

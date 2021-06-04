@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% block title %}{{ title }}{% endblock %}
-{% block js_head %}
+{% block head %}
+    {{ super() }}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
-{% block content %}
+{% block body %}
     {% for server in servers %}
         <a href="./#{{ server }}">{{ server }}</a>
     {% endfor %}
@@ -28,8 +29,6 @@
         <br>
     {% endfor %}
     <button onclick="scroll_top()" class="box" id="button_scroll_top" title="top">top</button>
-{% endblock %}
-{% block js_body %}
     <script>
 
         function getServerColor(address) {
@@ -61,26 +60,23 @@
             Chart.defaults.plugins.legend = false
 
             // overview chart
-
             let bg_colors = [];
             {% for server in servers %}
                 bg_colors.push(getServerColor({{ server | tojson }}))
             {% endfor %}
 
-            const data_overview = {
-                labels: {{ servers | tojson }},
-                datasets: [{
-                    label: 'player',
-                    data: {{ players | tojson }},
-                    hoverOffset: -32,
-                    backgroundColor: bg_colors
-                }]
-            };
-
             let chart_overview_canvas = document.getElementById('chart_overview');
             const chart_overview = new Chart(chart_overview_canvas, {
                 type: 'doughnut',
-                data: data_overview,
+                data: {
+                    labels: {{ servers | tojson }},
+                    datasets: [{
+                        label: 'player',
+                        data: {{ players | tojson }},
+                        hoverOffset: -32,
+                        backgroundColor: bg_colors
+                    }]
+                },
                 options: {
                     legend: {
                         display: false
@@ -92,15 +88,11 @@
 
             chart_overview_canvas.onclick = function (e) {
                 const points = chart_overview.getElementsAtEventForMode(e, 'nearest', {intersect: true}, true);
-                if (points.length) {
-                    document.getElementById(chart_overview.data.labels[points[0].index]).scrollIntoView();
-                }
+                if (points.length) document.getElementById(chart_overview.data.labels[points[0].index]).scrollIntoView();
             }
 
             // server charts
-
             {% for server in servers %}
-
                 fetch('./servers/{{ server }}').then(function (response) {
                     if (response.ok) {
                         return response.json();
@@ -108,33 +100,30 @@
                         return Promise.reject(response);
                     }
                 }).then(function (data) {
-
-                    const data_{{ server | alphabetic }} = {
-                        labels: data.map(function (entry) {
-                            return entry[0];
-                        }),
-                        datasets: [{
-                            label: 'player',
-                            data: data.map(function (entry) {
-                                return entry[1];
-                            }),
-                            fill: false,
-                            borderColor: '#2AA198',
-                            tension: 0.1
-                        }, {
-                            label: 'ping',
-                            data: data.map(function (entry) {
-                                return entry[2];
-                            }),
-                            fill: false,
-                            borderColor: '#268BD2',
-                            tension: 0.1
-                        }]
-                    };
-
                     const chart_{{ server | alphabetic }} = new Chart(document.getElementById('chart_{{ server | alphabetic }}'), {
                         type: 'line',
-                        data: data_{{ server | alphabetic }},
+                        data: {
+                            labels: data.map(function (entry) {
+                                return entry[0];
+                            }),
+                            datasets: [{
+                                label: 'player',
+                                data: data.map(function (entry) {
+                                    return entry[1];
+                                }),
+                                fill: false,
+                                borderColor: '#2AA198',
+                                tension: 0.1
+                            }, {
+                                label: 'ping',
+                                data: data.map(function (entry) {
+                                    return entry[2];
+                                }),
+                                fill: false,
+                                borderColor: '#268BD2',
+                                tension: 0.1
+                            }]
+                        },
                         options: {
                             legend: {
                                 display: false
@@ -143,14 +132,10 @@
                             maintainAspectRatio: false
                         },
                     });
-
                 }).catch(function (err) {
                     console.warn('error while fetching data for {{ server }}', err);
                 });
-
             {% endfor %}
-
         }
-
     </script>
 {% endblock %}
