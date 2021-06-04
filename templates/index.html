@@ -4,12 +4,15 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
 {% block content %}
+    {% for server in servers %}
+        <a href="./#{{ server }}">{{ server }}</a>
+    {% endfor %}
     <div style="height: 400px">
         <canvas id="chart_overview"></canvas>
     </div>
     <br>
     {% for server in servers %}
-        <div class="box" style="width: 850px">
+        <div class="box" id="{{ server }}" style="width: 850px">
             <div>
                 <h2>{{ server }}</h2>
                 {% if data[server][0][1] == None or data[server][0][2] == None %}
@@ -61,7 +64,8 @@
                 }]
             };
 
-            const chart_overview = new Chart(document.getElementById('chart_overview'), {
+            let chart_overview_canvas = document.getElementById('chart_overview');
+            const chart_overview = new Chart(chart_overview_canvas, {
                 type: 'doughnut',
                 data: data_overview,
                 options: {
@@ -72,6 +76,13 @@
                     maintainAspectRatio: false
                 },
             });
+
+            chart_overview_canvas.onclick = function (e) {
+                const points = chart_overview.getElementsAtEventForMode(e, 'nearest', {intersect: true}, true);
+                if (points.length) {
+                    document.getElementById(chart_overview.data.labels[points[0].index]).scrollIntoView();
+                }
+            }
 
             // server charts
 
@@ -95,7 +106,7 @@
                                 return entry[1];
                             }),
                             fill: false,
-                            borderColor: 'rgb(75, 192, 192)',
+                            borderColor: '#2AA198',
                             tension: 0.1
                         }, {
                             label: 'ping',
@@ -103,7 +114,7 @@
                                 return entry[2];
                             }),
                             fill: false,
-                            borderColor: 'rgb(75, 192, 192)',
+                            borderColor: '#268BD2',
                             tension: 0.1
                         }]
                     };
