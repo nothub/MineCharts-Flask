@@ -94,30 +94,7 @@
             server_colors.push(getServerColor({{ server | tojson }}))
         {% endfor %}
 
-        function updatePings() {
-            fetch('./pings')
-                    .then(function (response) {
-                        if (response.ok) {
-                            return response.json();
-                        } else {
-                            return Promise.reject(response);
-                        }
-                    })
-                    .then(data => obj = data)
-                    .then(() => {
-                        {%  for server in servers %}
-                            setPing({{ server | alphabetic | tojson }}, obj[{{ server | tojson }}])
-                        {% endfor %}
-                    })
-                    .catch(function (err) {
-                        console.warn('error while fetching ping data', err);
-                    });
-        }
-
-        window.onload = function () {
-
-            Chart.defaults.plugins.legend = false
-
+        function createChartOverview() {
             fetch('./players')
                     .then(function (response) {
                         if (response.ok) {
@@ -149,16 +126,85 @@
                                 maintainAspectRatio: false,
                             },
                         });
-
                         chart_overview_canvas.onclick = function (e) {
                             const points = chart_overview.getElementsAtEventForMode(e, 'nearest', {intersect: true}, true);
                             if (points.length) document.getElementById(chart_overview.data.labels[points[0].index]).scrollIntoView();
                         }
-
                     }).catch(function (err) {
                 console.warn('error while creating overview chart', err);
             });
+        }
 
+        function updatePings() {
+            fetch('./pings')
+                    .then(function (response) {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            return Promise.reject(response);
+                        }
+                    })
+                    .then(data => obj = data)
+                    .then(() => {
+                        {%  for server in servers %}
+                            setPing({{ server | alphabetic | tojson }}, obj[{{ server | tojson }}])
+                        {% endfor %}
+                    })
+                    .catch(function (err) {
+                        console.warn('error while fetching ping data', err);
+                    });
+        }
+
+        function createChartServer(id_part, server) {
+            fetch('./players/' + server)
+                    .then(function (response) {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            return Promise.reject(response);
+                        }
+                    })
+                    .then(function (data) {
+                        let chart_canvas = document.getElementById('chart_' + id_part);
+                        chart_canvas.height = 300;
+                        const chart = new Chart(chart_canvas, {
+                            type: 'line',
+                            data: {
+                                labels: data.map(function (entry) {
+                                    const date = new Date(0);
+                                    date.setUTCSeconds(entry[0]);
+                                    return date.toISOString();
+                                }),
+                                datasets: [{
+                                    label: 'players',
+                                    data: data.map(function (entry) {
+                                        return entry[1];
+                                    }),
+                                    fill: true,
+                                    borderColor: getServerColor(server),
+                                    tension: 0.1,
+                                }]
+                            },
+                            options: {
+                                responsive: false,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    x: {
+                                        display: false,
+                                    }
+                                }
+                            },
+                        });
+                    }).catch(function (err) {
+                console.warn('error while creating server chart for {{ server }}', err);
+            });
+        }
+
+        window.onload = function () {
+
+            Chart.defaults.plugins.legend = false
+
+            createChartOverview();
             updatePings();
 
             fetch('./logos')
@@ -181,50 +227,7 @@
 
             {% for server in servers %}
 
-                fetch('./players/{{ server }}')
-                        .then(function (response) {
-                            if (response.ok) {
-                                return response.json();
-                            } else {
-                                return Promise.reject(response);
-                            }
-                        })
-                        .then(function (data) {
-
-                            let chart_{{ server | alphabetic }}_canvas = document.getElementById('chart_{{ server | alphabetic }}');
-                            chart_{{ server | alphabetic }}_canvas.height = 300;
-                            const chart_{{ server | alphabetic }} = new Chart(chart_{{ server | alphabetic }}_canvas, {
-                                type: 'line',
-                                data: {
-                                    labels: data.map(function (entry) {
-                                        const date = new Date(0);
-                                        date.setUTCSeconds(entry[0]);
-                                        return date.toISOString();
-                                    }),
-                                    datasets: [{
-                                        label: 'players',
-                                        data: data.map(function (entry) {
-                                            return entry[1];
-                                        }),
-                                        fill: true,
-                                        borderColor: getServerColor({{ server | tojson }}),
-                                        tension: 0.1,
-                                    }]
-                                },
-                                options: {
-                                    responsive: false,
-                                    maintainAspectRatio: false,
-                                    scales: {
-                                        x: {
-                                            display: false,
-                                        }
-                                    }
-                                },
-                            });
-
-                        }).catch(function (err) {
-                    console.warn('error while fetching data for {{ server }}', err);
-                });
+                createChartServer({{ server | alphabetic | tojson }}, {{ server | tojson }});
 
             {% endfor %}
 
