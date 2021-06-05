@@ -17,6 +17,7 @@
 
 ### server charts
 
+- dates as human-readable in tooltip
 - updating charts
 
 ---
