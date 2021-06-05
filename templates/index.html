@@ -94,6 +94,26 @@
             server_colors.push(getServerColor({{ server | tojson }}))
         {% endfor %}
 
+        function updatePings() {
+            fetch('./pings')
+                    .then(function (response) {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            return Promise.reject(response);
+                        }
+                    })
+                    .then(data => obj = data)
+                    .then(() => {
+                        {%  for server in servers %}
+                            setPing({{ server | alphabetic | tojson }}, obj[{{ server | tojson }}])
+                        {% endfor %}
+                    })
+                    .catch(function (err) {
+                        console.warn('error while fetching ping data', err);
+                    });
+        }
+
         window.onload = function () {
 
             Chart.defaults.plugins.legend = false
@@ -110,7 +130,7 @@
                     .then(() => {
 
                         let chart_overview_canvas = document.getElementById('chart_overview');
-                        const chart_overview = new Chart(chart_overview_canvas, {
+                        let chart_overview = new Chart(chart_overview_canvas, {
                             type: 'doughnut',
                             data: {
                                 labels: Object.keys(obj),
@@ -136,26 +156,10 @@
                         }
 
                     }).catch(function (err) {
-                console.warn('error while fetching player data', err);
+                console.warn('error while creating overview chart', err);
             });
 
-            fetch('./pings')
-                    .then(function (response) {
-                        if (response.ok) {
-                            return response.json();
-                        } else {
-                            return Promise.reject(response);
-                        }
-                    })
-                    .then(data => obj = data)
-                    .then(() => {
-                        {%  for server in servers %}
-                            setPing({{ server | alphabetic | tojson }}, obj[{{ server | tojson }}])
-                        {% endfor %}
-                    })
-                    .catch(function (err) {
-                        console.warn('error while fetching ping data', err);
-                    });
+            updatePings();
 
             fetch('./logos')
                     .then(function await(response) {
@@ -225,25 +229,7 @@
             {% endfor %}
 
             setInterval(function () {
-
-                fetch('./pings')
-                        .then(function (response) {
-                            if (response.ok) {
-                                return response.json();
-                            } else {
-                                return Promise.reject(response);
-                            }
-                        })
-                        .then(data => obj = data)
-                        .then(() => {
-                            {%  for server in servers %}
-                                setPing({{ server | alphabetic | tojson }}, obj[{{ server | tojson }}])
-                            {% endfor %}
-                        })
-                        .catch(function (err) {
-                            console.warn('error while fetching ping data', err);
-                        });
-
+                updatePings();
             }, 15000);
 
         }
