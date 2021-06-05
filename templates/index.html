@@ -109,7 +109,7 @@
                                 datasets: [{
                                     label: 'players',
                                     data: Object.values(obj),
-                                    backgroundColor: Object.keys(obj).map(server => getServerColor(server)),
+                                    backgroundColor: Object.keys(obj).map(address => getServerColor(address)),
                                     borderWidth: 0,
                                     hoverBorderWidth: 1,
                                     hoverBorderColor: '#002B36',
@@ -130,28 +130,8 @@
             });
         }
 
-        function updatePings() {
-            fetch('./pings')
-                    .then(function (response) {
-                        if (response.ok) {
-                            return response.json();
-                        } else {
-                            return Promise.reject(response);
-                        }
-                    })
-                    .then(data => obj = data)
-                    .then(() => {
-                        {%  for server in servers %}
-                            setPing({{ server | alphabetic | tojson }}, obj[{{ server | tojson }}])
-                        {% endfor %}
-                    })
-                    .catch(function (err) {
-                        console.warn('error while fetching ping data', err);
-                    });
-        }
-
-        function createChartServer(id_part, server) {
-            fetch('./players/' + server)
+        function createChartServer(id_part, address) {
+            fetch('./players/' + address)
                     .then(function (response) {
                         if (response.ok) {
                             return response.json();
@@ -176,7 +156,7 @@
                                         return entry[1];
                                     }),
                                     fill: true,
-                                    borderColor: getServerColor(server),
+                                    borderColor: getServerColor(address),
                                     tension: 0.1,
                                 }]
                             },
@@ -191,17 +171,31 @@
                             },
                         });
                     }).catch(function (err) {
-                console.warn('error while creating server chart for {{ server }}', err);
+                console.warn('error while creating server chart for ' + address, err);
             });
         }
 
-        window.onload = function () {
+        function updatePings() {
+            fetch('./pings')
+                    .then(function (response) {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            return Promise.reject(response);
+                        }
+                    })
+                    .then(data => obj = data)
+                    .then(() => {
+                        {%  for server in servers %}
+                            setPing({{ server | alphabetic | tojson }}, obj[{{ server | tojson }}])
+                        {% endfor %}
+                    })
+                    .catch(function (err) {
+                        console.warn('error while fetching ping data', err);
+                    });
+        }
 
-            Chart.defaults.plugins.legend = false
-
-            createChartOverview();
-            updatePings();
-
+        function updateLogos() {
             fetch('./logos')
                     .then(function await(response) {
                         if (response.ok) {
@@ -219,6 +213,15 @@
                     .catch(function (err) {
                         console.warn('error while fetching logo data', err);
                     });
+        }
+
+        window.onload = function () {
+
+            Chart.defaults.plugins.legend = false
+
+            createChartOverview()
+            updatePings()
+            updateLogos()
 
             {% for server in servers %}
                 createChartServer({{ server | alphabetic | tojson }}, {{ server | tojson }});
