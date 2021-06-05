@@ -89,11 +89,6 @@
             }
         }
 
-        let server_colors = [];
-        {% for server in servers %}
-            server_colors.push(getServerColor({{ server | tojson }}))
-        {% endfor %}
-
         function createChartOverview() {
             fetch('./players')
                     .then(function (response) {
@@ -114,7 +109,7 @@
                                 datasets: [{
                                     label: 'players',
                                     data: Object.values(obj),
-                                    backgroundColor: server_colors,
+                                    backgroundColor: Object.keys(obj).map(server => getServerColor(server)),
                                     borderWidth: 0,
                                     hoverBorderWidth: 1,
                                     hoverBorderColor: '#002B36',
@@ -226,9 +221,7 @@
                     });
 
             {% for server in servers %}
-
                 createChartServer({{ server | alphabetic | tojson }}, {{ server | tojson }});
-
             {% endfor %}
 
             setInterval(function () {
