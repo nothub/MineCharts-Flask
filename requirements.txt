@@ -1,4 +1,4 @@
-mcstatus~=6.5.0
+mcstatus~=8.0.0
 Flask~=2.0.2
 Flask-Limiter~=2.0
 Flask-Minify~=0.36
